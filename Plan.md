@@ -36,7 +36,19 @@
 
 ## 4. 系统架构设计
 
-系统采用**分层架构**：
+### 4.1 代码结构与子仓库划分 (Recommended)
+
+根据现代软件工业最佳实践，建议将项目拆分为以下子仓库以便并行开发与独立部署：
+
+| 仓库名称 | 核心职责 | 技术栈 |
+| --- | --- | --- |
+| `backend-core` | 业务路由、系统管理、设备影子、MQTT 编排 | FastAPI, Python |
+| `ai-service` | ASR(语音识别), NLU(语义理解), TTS(语音合成) | PyTorch, Whisper, Qwen |
+| `device-simulator` | 底层设备驱动模拟、协议抽象（Zigbee/Matter 模拟） | C++ 20, CMake |
+| `app-mobile` | 用户交互界面、实时状态显示 | Flutter |
+| `deployment` | Docker 容器化配置、CI/CD 自动化流水线 | Docker, YAML |
+
+### 4.2 分层架构
 
 1. **感知交互层**：麦克风阵列拾音、App UI。
 2. **核心服务层**：ASR/NLP 引擎、业务路由、用户鉴权。
