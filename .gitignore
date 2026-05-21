@@ -1,4 +1,21 @@
-*
-!*.*
+# Python
+__pycache__/
+*.py[cod]
+*.class
+venv/
+.venv/
+env/
+.env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
 .DS_Store
-# Ignore macOS system files
+Thumbs.db
+
+# Project Build
+build/
+dist/
+*.egg-info/
