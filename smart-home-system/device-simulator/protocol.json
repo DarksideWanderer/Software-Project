@@ -1,0 +1,72 @@
+{
+  "version": "1.0",
+  "description": "智能家居设备仿真器 — C++/Python 通信协议",
+
+  "type_system": {
+    "int":    {"python": "int",     "cpp": "int",       "validation": "整数"},
+    "float":  {"python": "float",   "cpp": "double",    "validation": "浮点数"},
+    "string": {"python": "str",     "cpp": "std::string","validation": "字符串"},
+    "bool":   {"python": "bool",    "cpp": "bool",      "validation": "true/false"}
+  },
+
+  "response_format": {
+    "description": "每执行一条命令，C++ 向 stdout 输出一行 JSON，格式如下：",
+    "schema": {
+      "success":   {"type": "bool",   "description": "命令是否成功执行"},
+      "message":   {"type": "string", "description": "C++ cerr 输出的日志文本"},
+      "state":     {"type": "object", "description": "执行后的设备状态（可选）"},
+      "error":     {"type": "string", "description": "错误信息（失败时）"}
+    },
+    "example_success": {
+      "success": true,
+      "message": "AirConditioner turned on.\nCurrent temperature: 24°C",
+      "state": {"device_id": "ac-001", "device_type": "air_conditioner", "is_on": true, "temperature": 24}
+    },
+    "example_failure": {
+      "success": false,
+      "message": "Cannot set temperature. AirConditioner is off.",
+      "state": {"device_id": "ac-001", "device_type": "air_conditioner", "is_on": false, "temperature": 24}
+    }
+  },
+
+  "devices": {
+    "air_conditioner": {
+      "description": "空调设备",
+      "default_id": "ac-001",
+
+      "commands": {
+        "turn_on": {
+          "description": "打开空调",
+          "params": [],
+          "behavior": "对应 C++: ac.Execute(Commands::TurnOn{})"
+        },
+
+        "turn_off": {
+          "description": "关闭空调",
+          "params": [],
+          "behavior": "对应 C++: ac.Execute(Commands::TurnOff{})"
+        },
+
+        "set_temperature": {
+          "description": "设置目标温度（仅开机状态有效）",
+          "params": [
+            {"name": "temperature", "type": "int", "range": [16, 30], "description": "目标温度 °C"}
+          ],
+          "behavior": "对应 C++: ac.Execute(Commands::SetTemperature{t})"
+        },
+
+        "get_state": {
+          "description": "查询当前设备状态",
+          "params": [],
+          "behavior": "返回 is_on 和 temperature"
+        }
+      }
+    }
+  },
+
+  "wire_format": {
+    "request":  "<command> [arg1] [arg2] ...",
+    "response": "<JSON line>",
+    "note": "每条请求/响应各占一行，以换行符分隔。C++ 的 cerr 日志仅供终端观察，不参与协议。"
+  }
+}

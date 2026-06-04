@@ -1,13 +1,13 @@
-cmake_minimum_required(VERSION 3.20)
-project(SmartHomeSimulator VERSION 1.0.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.16)
+project(SmartHomeSimulator VERSION 2.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Check for Clang
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-Wall -Wextra -Wpedantic)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    add_compile_options(-Wall -Wextra)
 endif()
 
-# Dummy executable for now
-add_executable(simulator src/main.cpp)
+include_directories(include)
+file(GLOB_RECURSE SOURCES src/*.cpp)
+add_executable(simulator ${SOURCES})
