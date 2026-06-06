@@ -36,6 +36,9 @@ private:
     };
     std::map<std::string, Entry> entries_;
     std::string state_fields_json_ = "{}";
+    std::string device_type_       = "unknown";
+    std::string device_description_ = "未知设备";
+    std::string device_default_id_  = "unknown-001";
     Logger logger_;
 
 public:
@@ -43,6 +46,13 @@ public:
 
     void SetStateFieldsJson(const std::string& json) { state_fields_json_ = json; }
     const std::string& GetStateFieldsJson() const { return state_fields_json_; }
+
+    /// 设置设备元数据（供 GenerateProtocolJson 使用）
+    void SetDeviceMeta(const std::string& type, const std::string& desc, const std::string& default_id) {
+        device_type_        = type;
+        device_description_ = desc;
+        device_default_id_  = default_id;
+    }
 
     /// 注册一条命令
     void Register(const CommandDef& def, Handler handler) {
@@ -73,42 +83,41 @@ public:
         return result;
     }
 
-    /// 生成协议 JSON
+    /// 生成当前设备的协议 JSON（自描述）
+    /// 注意：每个进程只注册一种设备，因此输出不含 "devices" 包装层。
+    ///       全量设备协议参见仓库根目录的 protocol.json。
     std::string GenerateProtocolJson() const {
         std::ostringstream os;
         os << "{\n";
         os << "  \"version\": \"1.0\",\n";
-        os << "  \"devices\": {\n";
-        os << "    \"air_conditioner\": {\n";
-        os << "      \"description\": \"空调设备\",\n";
-        os << "      \"default_id\": \"ac-001\",\n";
-        os << "      \"commands\": {\n";
+        os << "  \"device_type\": \"" << device_type_ << "\",\n";
+        os << "  \"description\": \"" << device_description_ << "\",\n";
+        os << "  \"default_id\": \"" << device_default_id_ << "\",\n";
+        os << "  \"commands\": {\n";
 
         bool first = true;
         for (const auto& [name, entry] : entries_) {
             if (!first) os << ",\n";
             first = false;
             const auto& def = entry.def;
-            os << "        \"" << def.name << "\": {\n";
-            os << "          \"description\": \"" << def.description << "\",\n";
-            os << "          \"params\": [\n";
+            os << "    \"" << def.name << "\": {\n";
+            os << "      \"description\": \"" << def.description << "\",\n";
+            os << "      \"params\": [\n";
 
             for (size_t i = 0; i < def.params.size(); ++i) {
                 const auto& p = def.params[i];
-                os << "            {\"name\":\"" << p.name << "\",";
+                os << "        {\"name\":\"" << p.name << "\",";
                 os << "\"type\":\"" << ParamTypeToString(p.type) << "\",";
                 os << "\"description\":\"" << p.description << "\"}";
                 if (i < def.params.size() - 1) os << ",";
                 os << "\n";
             }
 
-            os << "          ]\n";
-            os << "        }";
+            os << "      ]\n";
+            os << "    }";
         }
 
-        os << "\n      }\n";
-        os << "    }\n";
-        os << "  },\n";
+        os << "\n  },\n";
         os << "  \"response_format\": {\n";
         os << "    \"schema\": {\n";
         os << "      \"success\": {\"type\": \"bool\"},\n";

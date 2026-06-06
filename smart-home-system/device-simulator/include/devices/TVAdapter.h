@@ -9,6 +9,7 @@
 class TVAdapter {
 public:
     static void Register(CommandRegistry& r, Devices::TV& tv) {
+        r.SetDeviceMeta("tv", "电视设备", "tv-001");
         r.SetStateFieldsJson(
             R"({"is_on":"bool","channel":"int","volume":"int"})");
 

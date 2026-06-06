@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/d/Users/17269/Documents/Github/Software-Project/smart-home-system/device-simulator/build",
+  "command": "/usr/bin/c++.exe  -I/d/Users/17269/Documents/Github/Software-Project/smart-home-system/device-simulator/include -std=gnu++20 -Wall -Wextra -o CMakeFiles/simulator.dir/src/main.cpp.o -c /d/Users/17269/Documents/Github/Software-Project/smart-home-system/device-simulator/src/main.cpp",
+  "file": "/d/Users/17269/Documents/Github/Software-Project/smart-home-system/device-simulator/src/main.cpp",
+  "output": "CMakeFiles/simulator.dir/src/main.cpp.o"
+}
+]

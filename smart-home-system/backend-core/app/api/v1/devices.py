@@ -26,6 +26,16 @@ async def get_device_state(device_id: str):
     return await hub.get_state(device_id)
 
 
+@router.get("/{device_id}/commands/count")
+async def get_device_command_count(device_id: str):
+    """查询某个设备有什么命令"""
+    return hub.get_command_count(device_id)
+
+@router.get("/{device_id}/commands/{command_name}")
+async def get_device_command_schema(device_id: str, command_name: str):
+    """查询某个设备的某个命令的调用格式"""
+    return hub.get_command_schema(device_id, command_name)
+
 @router.post("/{device_id}/command", response_model=CommandResponse)
 async def device_command(device_id: str, req: CommandRequest):
     """向设备发送命令"""

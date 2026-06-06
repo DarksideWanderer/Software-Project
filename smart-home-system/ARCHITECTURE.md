@@ -182,7 +182,7 @@ export PATH=/usr/bin:$PATH
 which g++                      # 应输出 /usr/bin/g++
 
 rm -rf build
-cmake -B build -G "MSYS Makefiles" \
+cmake -B build -G "Unix Makefiles" \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake --build build
 

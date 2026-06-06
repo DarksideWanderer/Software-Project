@@ -11,6 +11,7 @@
 class AirConditionerAdapter {
 public:
     static void Register(CommandRegistry& registry, Devices::AirConditioner& ac) {
+        registry.SetDeviceMeta("air_conditioner", "空调设备", "ac-001");
         registry.SetStateFieldsJson(
             R"({"is_on":"bool","temperature":"int"})");
 

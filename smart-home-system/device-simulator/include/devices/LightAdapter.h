@@ -9,6 +9,7 @@
 class LightAdapter {
 public:
     static void Register(CommandRegistry& r, Devices::Light& light) {
+        r.SetDeviceMeta("light", "灯光设备", "light-001");
         r.SetStateFieldsJson(
             R"({"is_on":"bool","brightness":"int","color":"string"})");
 

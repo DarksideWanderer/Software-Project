@@ -63,12 +63,8 @@ class DeviceHub:
         return [{
             "device_id": did,
             "device_type": info.get("type", "unknown"),
-            "commands": [
-                {"name": c["name"], "description": c.get("description", ""),
-                 "params": c.get("params", [])}
-                for c in info.get("commands", [])
-            ],
-            "state_fields": info.get("state_fields", {})
+            "description": info.get("description", ""),
+            "connected": did in self._devices,
         } for did, info in self._registry.items()]
 
     async def send_command(self, device_id: str, command: str, params: dict = None) -> dict:
@@ -85,6 +81,51 @@ class DeviceHub:
 
     async def get_state(self, device_id: str) -> dict:
         return await self.send_command(device_id, "get_state")
+
+    def get_command_count(self, device_id: str) -> dict:
+        """查询某个设备有多少种命令"""
+        info = self._registry.get(device_id)
+        if not info:
+            return {"device_id": device_id, "connected": False,
+                    "command_count": 0, "message": "Device not connected"}
+        commands = info.get("commands", [])
+        return {
+            "device_id": device_id,
+            "device_type": info.get("type", "unknown"),
+            "connected": device_id in self._devices,
+            "command_count": len(commands),
+            "commands": [c["name"] for c in commands]
+        }
+
+    def get_command_schema(self, device_id: str, command_name: str) -> dict:
+        """查询某个设备的某个命令的调用格式（参数定义）"""
+        info = self._registry.get(device_id)
+        if not info:
+            return {"device_id": device_id, "connected": False,
+                    "message": "Device not connected"}
+
+        commands = info.get("commands", [])
+        for cmd in commands:
+            if cmd.get("name") == command_name:
+                return {
+                    "device_id": device_id,
+                    "device_type": info.get("type", "unknown"),
+                    "connected": device_id in self._devices,
+                    "command": {
+                        "name": cmd["name"],
+                        "description": cmd.get("description", ""),
+                        "params": cmd.get("params", []),
+                        "call_format": {
+                            "command": cmd["name"],
+                            "params": {p["name"]: f"<{p.get('type', 'string')}>"
+                                       for p in cmd.get("params", [])}
+                        }
+                    }
+                }
+
+        return {"device_id": device_id, "message":
+                f"Command '{command_name}' not found. Available: "
+                f"{[c['name'] for c in commands]}"}
 
     # ── TCP 服务器 ──
 
