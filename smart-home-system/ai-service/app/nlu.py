@@ -120,6 +120,17 @@ def _extract_first_number(text: str) -> int | None:
     if match:
         return int(match.group())
     chinese_numbers = {
+        "一": 1,
+        "二": 2,
+        "两": 2,
+        "三": 3,
+        "四": 4,
+        "五": 5,
+        "六": 6,
+        "七": 7,
+        "八": 8,
+        "九": 9,
+        "十": 10,
         "十六": 16,
         "十七": 17,
         "十八": 18,
@@ -266,9 +277,9 @@ def _extract_action(text: str, device_type: str) -> tuple[str | None, int | None
     if device_type == "light":
         if any(keyword in text for keyword in ("亮度", "调亮", "调暗")) and number is not None:
             return "set_brightness", number, "percent"
-        if any(keyword in text for keyword in ("调亮", "增加亮度")):
+        if any(keyword in text for keyword in ("调亮", "增加亮度", "亮一点")):
             return "increase_brightness", number, "percent"
-        if any(keyword in text for keyword in ("调暗", "降低亮度")):
+        if any(keyword in text for keyword in ("调暗", "降低亮度", "暗一点")):
             return "decrease_brightness", number, "percent"
     if device_type == "curtain":
         if any(keyword in text for keyword in ("一半", "半开")):

@@ -71,3 +71,110 @@ def test_unknown_intent():
 
     assert result.intent == "unknown"
     assert result.need_clarification is False
+
+
+def test_turn_off_living_room_light():
+    result = parse_text("关闭客厅灯")
+
+    assert result.intent == "device_control"
+    assert result.slots.device_type == "light"
+    assert result.slots.location == "living_room"
+    assert result.slots.action == "turn_off"
+
+
+def test_turn_on_bedroom_light():
+    result = parse_text("打开卧室灯")
+
+    assert result.intent == "device_control"
+    assert result.slots.device_type == "light"
+    assert result.slots.location == "bedroom"
+    assert result.slots.action == "turn_on"
+
+
+def test_set_living_room_light_brightness():
+    result = parse_text("把客厅灯亮度调到80")
+
+    assert result.intent == "device_control"
+    assert result.slots.device_type == "light"
+    assert result.slots.location == "living_room"
+    assert result.slots.action == "set_brightness"
+    assert result.slots.value == 80
+    assert result.slots.unit == "percent"
+
+
+def test_turn_on_bedroom_air_conditioner():
+    result = parse_text("打开卧室空调")
+
+    assert result.intent == "device_control"
+    assert result.slots.device_type == "air_conditioner"
+    assert result.slots.location == "bedroom"
+    assert result.slots.action == "turn_on"
+
+
+def test_turn_off_bedroom_air_conditioner():
+    result = parse_text("关闭卧室空调")
+
+    assert result.intent == "device_control"
+    assert result.slots.device_type == "air_conditioner"
+    assert result.slots.location == "bedroom"
+    assert result.slots.action == "turn_off"
+
+
+def test_increase_air_conditioner_temperature_with_context():
+    result = parse_text(
+        "空调调高两度",
+        NluContext(last_device_type="air_conditioner", last_location="bedroom"),
+    )
+
+    assert result.intent == "device_control"
+    assert result.slots.device_type == "air_conditioner"
+    assert result.slots.location == "bedroom"
+    assert result.slots.action == "increase_temperature"
+    assert result.slots.value == 2
+    assert result.slots.unit == "celsius"
+
+
+def test_open_living_room_curtain():
+    result = parse_text("打开客厅窗帘")
+
+    assert result.intent == "device_control"
+    assert result.slots.device_type == "curtain"
+    assert result.slots.location == "living_room"
+    assert result.slots.action == "open"
+
+
+def test_close_bedroom_curtain():
+    result = parse_text("关闭卧室窗帘")
+
+    assert result.intent == "device_control"
+    assert result.slots.device_type == "curtain"
+    assert result.slots.location == "bedroom"
+    assert result.slots.action == "close"
+
+
+def test_set_curtain_half_open_with_context():
+    result = parse_text("窗帘开一半", NluContext(last_location="living_room"))
+
+    assert result.intent == "device_control"
+    assert result.slots.device_type == "curtain"
+    assert result.slots.location == "living_room"
+    assert result.slots.action == "set_open_percent"
+    assert result.slots.value == 50
+    assert result.slots.unit == "percent"
+
+
+def test_weather_query_tomorrow_beijing():
+    result = parse_text("明天北京天气怎么样")
+
+    assert result.intent == "weather_query"
+    assert result.slots.city == "北京"
+    assert result.need_clarification is False
+
+
+def test_reminder_create_after_ten_minutes():
+    result = parse_text("提醒我十分钟后关空调")
+
+    assert result.intent == "reminder_create"
+    assert result.slots.datetime == "十分钟后"
+    assert result.slots.content == "关空调"
+    assert result.need_clarification is False
