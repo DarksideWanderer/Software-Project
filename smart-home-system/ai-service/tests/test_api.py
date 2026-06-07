@@ -41,3 +41,20 @@ def test_asr_mock_endpoint():
     assert body["success"] is True
     assert body["text"] == "打开客厅灯"
     assert body["provider"] == "mock"
+
+
+def test_asr_without_audio_returns_clear_error():
+    response = client.post(
+        "/ai/asr",
+        json={
+            "audio_base64": "",
+            "format": "wav",
+            "sample_rate": 16000,
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is False
+    assert body["provider"] == "iflytek"
+    assert "No audio_base64 provided" in body["message"]

@@ -1,5 +1,6 @@
 import re
 
+from . import llm_nlu
 from .schemas import NluContext, NluResponse, Slots
 
 
@@ -50,6 +51,16 @@ SUPPORTED_INTENTS = [
 
 
 def parse_text(text: str, context: NluContext | None = None) -> NluResponse:
+    rule_result = parse_text_by_rules(text, context)
+    if _should_try_llm(rule_result):
+        try:
+            return llm_nlu.parse_with_deepseek(text, context)
+        except Exception:
+            return rule_result
+    return rule_result
+
+
+def parse_text_by_rules(text: str, context: NluContext | None = None) -> NluResponse:
     normalized = _normalize(text)
     context = context or NluContext()
 
@@ -78,6 +89,12 @@ def parse_text(text: str, context: NluContext | None = None) -> NluResponse:
         slots=Slots(),
         need_clarification=False,
         reply="暂时无法理解该指令，请尝试设备控制、天气查询或提醒创建。",
+    )
+
+
+def _should_try_llm(result: NluResponse) -> bool:
+    return llm_nlu.is_deepseek_configured() and (
+        result.intent == "unknown" or result.confidence < 0.5
     )
 
 

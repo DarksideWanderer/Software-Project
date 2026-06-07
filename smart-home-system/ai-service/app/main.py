@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from .asr import transcribe_audio
-from .config import settings
+from .config import Settings, settings
 from .nlu import SUPPORTED_ACTIONS, SUPPORTED_INTENTS, parse_text
 from .schemas import AsrRequest, AsrResponse, HealthResponse, NluRequest, NluResponse
 
@@ -15,6 +15,7 @@ app = FastAPI(
 
 @app.get("/health", response_model=HealthResponse, tags=["System"])
 async def health() -> HealthResponse:
+    current_settings = Settings()
     return HealthResponse(
         status="ok",
         service=settings.service_name,
@@ -22,11 +23,11 @@ async def health() -> HealthResponse:
         supported_actions=SUPPORTED_ACTIONS,
         external_providers_configured={
             "iflytek": bool(
-                settings.iflytek_app_id
-                and settings.iflytek_api_key
-                and settings.iflytek_api_secret
+                current_settings.iflytek_app_id
+                and current_settings.iflytek_api_key
+                and current_settings.iflytek_api_secret
             ),
-            "llm": bool(settings.llm_api_key),
+            "llm": bool(current_settings.deepseek_api_key),
         },
     )
 
