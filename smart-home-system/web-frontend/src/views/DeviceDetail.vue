@@ -553,4 +553,6 @@ onUnmounted(() => clearInterval(timer))
 
 @media (max-width: 640px) {
   .spot-main { flex-wrap: wrap; }
- 
+  .dial { margin-top: 8px; }
+}
+</style>

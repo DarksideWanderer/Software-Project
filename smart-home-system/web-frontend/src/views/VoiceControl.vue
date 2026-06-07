@@ -73,6 +73,12 @@ async function execute(text) {
         busy.value = false
         return
       }
+      // 无 actions 但 AI 已给出回复 (澄清/天气/提醒/场景): 直接展示, 不回退规则
+      if (plan.handled && plan.reply) {
+        record(t, !plan.needClarification, plan.reply, 'AI')
+        busy.value = false
+        return
+      }
       runRule(t, '规则 (AI 未匹配)')
     } catch (e) {
       runRule(t, '规则 (AI 回退)')

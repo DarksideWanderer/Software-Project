@@ -31,18 +31,20 @@ api.interceptors.response.use(
 )
 
 // 设备相关 API
+// ⚠ 真实端点以 backend-core (proj/feature-cpp) 为准, 见 ./backend.js。
+// 此处保留简易封装并已对齐契约: 状态为 /state, 命令为 /command {command, params}。
 export const deviceApi = {
-  // 获取设备列表
+  // 获取设备列表 -> { devices: [{ device_id, device_type, description, connected }] }
   getDevices() {
     return api.get('/devices')
   },
   // 获取设备状态
   getDeviceStatus(deviceId) {
-    return api.get(`/devices/${deviceId}/status`)
+    return api.get(`/devices/${deviceId}/state`)
   },
-  // 控制设备
-  controlDevice(deviceId, command) {
-    return api.post(`/devices/${deviceId}/control`, command)
+  // 控制设备: body 必须为 { command, params }
+  controlDevice(deviceId, command, params = {}) {
+    return api.post(`/devices/${deviceId}/command`, { command, params })
   }
 }
 
