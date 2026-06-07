@@ -1,20 +1,24 @@
 # AI Service Layer
 
-## Introduction
-Handles Speech-to-Text (ASR), Natural Language Understanding (NLU), and Text-to-Speech (TTS) pipelines.
+FastAPI-based AI service for the smart home assistant project.
 
-## Tech Stack
-- **Language**: Python 3.10+
-- **Models**: Whisper (ASR), Qwen/Llama (NLU), FunASR (TTS)
-- **Frameworks**: PyTorch / ONNX Runtime
-- **Protocol**: gRPC / FastAPI (for internal communication)
+Current MVP features:
 
-## Directory Structure
-- `models/`: Model weights and artifacts
-- `src/asr/`: Speech recognition logic
-- `src/nlu/`: Intent parsing and LLM orchestration
-- `src/tts/`: Voice synthesis
-- `tests/`: AI pipeline validation
+- `GET /health`: health and capability check.
+- `POST /ai/nlu`: rule-based Chinese command parsing.
+- `POST /ai/asr`: mock ASR endpoint; real iFlytek integration can replace this later.
 
----
-[中文版文档入口](./README_zh.md)
+The AI service does not control devices directly. It returns structured JSON for the backend to dispatch.
+
+## Run
+
+```bash
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8100
+```
+
+## Test
+
+```bash
+pytest
+```
