@@ -19,3 +19,11 @@ Thumbs.db
 build/
 dist/
 *.egg-info/
+
+# Executables
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.out

@@ -1,10 +1,15 @@
 from fastapi import APIRouter
 
+from .devices import router as devices_router
+
 ## @file __init__.py
 # @brief API V1 路由定义文件
 # @details 汇总并挂载系统版本 1 的所有功能模块路由
 
 router = APIRouter()
+
+# 挂载设备仿真路由
+router.include_router(devices_router)
 
 ## @brief 获取系统概览信息
 # @details 返回当前 API 版本的相关信息及支持的功能特性列表
