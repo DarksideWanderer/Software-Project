@@ -1,44 +1,24 @@
 <script setup>
-import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Moon, Sunny, Plus, Microphone } from '@element-plus/icons-vue'
-import { useTheme } from './composables/useTheme'
+import { Plus, Microphone } from '@element-plus/icons-vue'
 import { usePairing } from './composables/usePairing'
 import PairingDialog from './components/PairingDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { theme, toggle } = useTheme()
 const { openPairing } = usePairing()
 
 const nav = [
-  { path: '/', label: '总控面板' },
-  { path: '/rooms', label: '房间' },
-  { path: '/voice', label: '语音控制' },
-  { path: '/settings', label: '设置' },
+  { path: '/', label: '总控面板', en: 'DASHBOARD' },
+  { path: '/rooms', label: '房间', en: 'ROOMS' },
+  { path: '/voice', label: '语音控制', en: 'VOICE' },
+  { path: '/settings', label: '设置', en: 'CONFIG' },
 ]
-
-const isDark = computed(() => theme.value === 'dark')
 </script>
 
 <template>
   <div class="layout">
-    <header class="topbar glass">
-      <div class="brand">
-        <div class="brand-mark">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
-               stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 11.5 12 4l9 7.5" />
-            <path d="M5.5 10v9.5h13V10" />
-            <path d="M10 19.5v-5h4v5" />
-          </svg>
-        </div>
-        <div class="brand-text">
-          <span class="brand-title">智能中控</span>
-          <span class="brand-sub">Whole-Home Control</span>
-        </div>
-      </div>
-
+    <header class="topbar">
       <nav class="nav">
         <router-link
           v-for="item in nav"
@@ -47,7 +27,8 @@ const isDark = computed(() => theme.value === 'dark')
           class="nav-item"
           :class="{ active: route.path === item.path }"
         >
-          {{ item.label }}
+          <span class="nav-label">{{ item.label }}</span>
+          <span class="nav-en">{{ item.en }}</span>
         </router-link>
       </nav>
 
@@ -55,10 +36,7 @@ const isDark = computed(() => theme.value === 'dark')
         <button class="icon-btn" @click="router.push('/voice')" title="语音控制">
           <el-icon :size="18"><Microphone /></el-icon>
         </button>
-        <button class="icon-btn" @click="toggle" :title="isDark ? '切换浅色' : '切换深色'">
-          <el-icon :size="18"><component :is="isDark ? Sunny : Moon" /></el-icon>
-        </button>
-        <el-button type="primary" :icon="Plus" round class="add-btn" @click="openPairing">
+        <el-button type="primary" :icon="Plus" class="add-btn" @click="openPairing">
           添加家电
         </el-button>
       </div>
@@ -83,6 +61,7 @@ const isDark = computed(() => theme.value === 'dark')
   flex-direction: column;
 }
 
+/* 黑色通栏顶栏 (P4RE: 黑底 + 黄色高亮) */
 .topbar {
   position: sticky;
   top: 0;
@@ -90,64 +69,49 @@ const isDark = computed(() => theme.value === 'dark')
   display: flex;
   align-items: center;
   gap: 24px;
-  height: 68px;
+  height: 64px;
   padding: 0 28px;
-  margin: 14px 18px 0;
-  border-radius: 18px;
+  background: #111;
+  color: #f5f5f0;
+  border-bottom: 3px solid var(--p4-yellow);
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 180px;
-}
-.brand-mark {
-  width: 42px;
-  height: 42px;
-  border-radius: 13px;
-  background: var(--brand-grad);
-  display: grid;
-  place-items: center;
-  box-shadow: 0 6px 18px rgba(91, 108, 255, 0.4);
-}
-.brand-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-}
-.brand-title {
-  font-weight: 700;
-  font-size: 16px;
-  color: var(--text);
-}
-.brand-sub {
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
 
 .nav {
   display: flex;
-  gap: 6px;
-  margin: 0 auto;
+  gap: 4px;
+  margin-right: auto;
 }
 .nav-item {
-  padding: 9px 18px;
-  border-radius: 11px;
-  font-size: 14.5px;
-  font-weight: 550;
-  color: var(--text-soft);
-  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+  padding: 7px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #b5b5ad;
+  border-radius: var(--r-sm);
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+.nav-en {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  opacity: 0.6;
 }
 .nav-item:hover {
-  color: var(--text);
-  background: var(--surface-2);
+  color: #fff;
+  background: #2a2a2a;
 }
 .nav-item.active {
-  color: var(--brand);
-  background: color-mix(in srgb, var(--brand) 14%, transparent);
+  color: #111;
+  background: var(--p4-yellow);
+  box-shadow: 3px 3px 0 rgba(255, 255, 255, 0.25);
+}
+.nav-item.active .nav-en {
+  opacity: 0.85;
 }
 
 .actions {
@@ -156,25 +120,24 @@ const isDark = computed(() => theme.value === 'dark')
   gap: 12px;
 }
 .icon-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text-soft);
+  width: 38px;
+  height: 38px;
+  border: 2px solid #f5f5f0;
+  border-radius: 50%;
+  background: transparent;
+  color: #f5f5f0;
   cursor: pointer;
   display: grid;
   place-items: center;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 .icon-btn:hover {
-  color: var(--brand);
-  border-color: var(--brand);
-  transform: translateY(-1px);
+  color: #111;
+  background: var(--p4-yellow);
+  border-color: var(--p4-yellow);
 }
 .add-btn {
-  font-weight: 600;
-  box-shadow: 0 6px 18px rgba(91, 108, 255, 0.35);
+  font-weight: 800;
 }
 
 .content {
@@ -198,6 +161,5 @@ const isDark = computed(() => theme.value === 'dark')
     margin: 0;
     justify-content: center;
   }
-  .brand-sub { display: none; }
 }
 </style>

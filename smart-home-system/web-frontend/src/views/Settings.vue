@@ -1,18 +1,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { useTheme } from '../composables/useTheme'
 import { useAIConfig } from '../composables/useAIConfig'
 import { useDeviceStore } from '../stores/devices'
 
-const { theme, set } = useTheme()
 const { config } = useAIConfig()
 const store = useDeviceStore()
 
-const themes = [
-  { value: 'light', label: '浅色', desc: '明亮留白' },
-  { value: 'dark', label: '深色', desc: '科技质感' },
-]
 
 const conn = ref({
   apiBaseUrl: 'http://localhost:8000',
@@ -155,31 +149,7 @@ async function resetDemo() {
           <el-input v-model="conn.websocketUrl" />
         </el-form-item>
       </el-form>
-      <el-button type="primary" round @click="saveConn">保存配置</el-button>
-    </section>
-
-    <section class="panel glass">
-      <h2 class="panel-title">外观主题</h2>
-      <div class="theme-row">
-        <button
-          v-for="t in themes"
-          :key="t.value"
-          class="theme-card"
-          :class="[t.value, { on: theme === t.value }]"
-          @click="set(t.value)"
-        >
-          <div class="preview">
-            <span class="p-bar" />
-            <span class="p-card" />
-            <span class="p-card short" />
-          </div>
-          <div class="theme-meta">
-            <span class="theme-label">{{ t.label }}</span>
-            <span class="theme-desc">{{ t.desc }}</span>
-          </div>
-          <span class="radio" :class="{ on: theme === t.value }" />
-        </button>
-      </div>
+      <el-button type="primary" @click="saveConn">保存配置</el-button>
     </section>
 
     <section class="panel glass">
@@ -189,33 +159,27 @@ async function resetDemo() {
           <p class="data-title">恢复演示数据</p>
           <p class="data-desc">重置为初始演示设备集合（仅本地模式）。</p>
         </div>
-        <el-button round @click="resetDemo">恢复</el-button>
+        <el-button @click="resetDemo">恢复</el-button>
       </div>
     </section>
 
-    <section class="panel glass">
-      <h2 class="panel-title">关于</h2>
-      <div class="info-row"><span>系统名称</span><b>全屋智能中控系统</b></div>
-      <div class="info-row"><span>前端版本</span><b>v1.1.0</b></div>
-      <div class="info-row"><span>技术栈</span><b>Vue 3 · Vite · Element Plus · Pinia</b></div>
-    </section>
   </div>
 </template>
 
 <style scoped>
 .settings { display: flex; flex-direction: column; gap: 20px; max-width: 760px; }
-.head h1 { font-size: 28px; font-weight: 720; }
+.head h1 { font-size: 28px; font-weight: 800; }
 .head p { color: var(--text-faint); font-size: 14px; margin-top: 4px; }
 
-.panel { padding: 24px 26px; border-radius: 22px; }
-.panel-title { font-size: 15px; font-weight: 650; margin-bottom: 16px; color: var(--text-soft); }
+.panel { padding: 24px 26px; }
+.panel-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--text-soft); }
 .panel-title.no-mb { margin-bottom: 4px; }
 .panel-note { font-size: 13px; color: var(--text-faint); margin-bottom: 18px; margin-top: -6px; }
 .panel-note.no-mb { margin-bottom: 0; max-width: 460px; }
 
 .source-row { display: flex; gap: 14px; flex-wrap: wrap; }
 .source-card {
-  flex: 1; min-width: 200px; text-align: left; padding: 16px 18px; border-radius: 14px;
+  flex: 1; min-width: 200px; text-align: left; padding: 16px 18px; 
   border: 1.5px solid var(--border); background: var(--surface-2); cursor: pointer;
   display: flex; flex-direction: column; gap: 4px; transition: all 0.2s ease;
 }
@@ -225,7 +189,7 @@ async function resetDemo() {
 .src-title { font-weight: 650; font-size: 15px; }
 .src-desc { font-size: 12.5px; color: var(--text-faint); }
 .status-line { margin-top: 16px; font-size: 13px; color: var(--text-soft); display: flex; align-items: center; gap: 8px; }
-.status-line .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-faint); }
+.status-line .dot { border-radius: 50%; width: 8px; height: 8px; background: var(--text-faint); }
 .status-line .dot.live { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
 .status-line .err { color: var(--danger); }
 
@@ -233,37 +197,17 @@ async function resetDemo() {
 .ai-form { margin-top: 18px; }
 .seg { display: flex; gap: 8px; margin-bottom: 16px; }
 .seg-btn {
-  padding: 9px 16px; border-radius: 11px; border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  padding: 9px 16px; border: 1px solid var(--border);
   background: var(--surface-2); color: var(--text-soft); font-size: 13.5px; font-weight: 550;
   cursor: pointer; transition: all 0.18s ease;
 }
 .seg-btn:hover { color: var(--text); border-color: var(--brand); }
-.seg-btn.on { color: #fff; background: var(--brand); border-color: var(--brand); }
+.seg-btn.on { color: var(--on-brand); background: var(--brand); border-color: var(--brand); }
 .ai-tip { font-size: 12px; color: var(--text-faint); margin-top: 4px; }
 
 .conn-form { margin-bottom: 6px; }
 
-.theme-row { display: flex; gap: 16px; flex-wrap: wrap; }
-.theme-card {
-  flex: 1; min-width: 200px; display: flex; align-items: center; gap: 14px; padding: 16px;
-  border-radius: 16px; border: 1.5px solid var(--border); background: var(--surface-2);
-  cursor: pointer; transition: all 0.2s ease;
-}
-.theme-card:hover { border-color: var(--brand); }
-.theme-card.on { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent); }
-.preview { width: 64px; height: 48px; border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
-.theme-card.light .preview { background: #eef1f8; }
-.theme-card.dark .preview { background: #0a0c16; }
-.p-bar { height: 6px; border-radius: 3px; background: var(--brand); width: 70%; }
-.p-card { height: 10px; border-radius: 4px; }
-.theme-card.light .p-card { background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
-.theme-card.dark .p-card { background: rgba(255,255,255,0.12); }
-.p-card.short { width: 60%; }
-.theme-meta { flex: 1; display: flex; flex-direction: column; }
-.theme-label { font-weight: 650; font-size: 15px; }
-.theme-desc { font-size: 12.5px; color: var(--text-faint); }
-.radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-strong); flex-shrink: 0; transition: all 0.2s ease; }
-.radio.on { border-color: var(--brand); background: var(--brand); box-shadow: inset 0 0 0 4px var(--surface-solid); }
 
 .data-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .data-title { font-weight: 600; font-size: 14.5px; }

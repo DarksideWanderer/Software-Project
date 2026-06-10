@@ -80,7 +80,7 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
   <el-dialog
     v-model="pairingOpen"
     width="520"
-    align-center
+    top="10vh"
     :close-on-click-modal="false"
     class="pair-dialog"
     @closed="store.stopScan()"
@@ -120,7 +120,7 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
           v-for="item in discovered"
           :key="item.tempId"
           class="found"
-          :style="{ '--accent': getCategory(item.type).accent }"
+          :style="{ '--accent': getCategory(item.type).accent, '--on-accent': getCategory(item.type).onAccent }"
           @click="pick(item)"
         >
           <span class="found-icon"><DeviceIcon :type="item.type" :size="20" /></span>
@@ -134,14 +134,14 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
         </button>
       </transition-group>
 
-      <el-button :icon="Refresh" :loading="scanning" round class="rescan" @click="store.startScan()">
+      <el-button :icon="Refresh" :loading="scanning" class="rescan" @click="store.startScan()">
         {{ scanning ? '搜索中' : '重新扫描' }}
       </el-button>
     </div>
 
     <!-- 步骤二: 配置 -->
     <div v-else-if="step === 'configure'" class="configure">
-      <div class="sel-card" :style="{ '--accent': selectedCat.accent }">
+      <div class="sel-card" :style="{ '--accent': selectedCat.accent, '--on-accent': selectedCat.onAccent }">
         <span class="sel-icon"><DeviceIcon :type="selected.type" :size="26" /></span>
         <div>
           <p class="sel-model">{{ selected.model }}</p>
@@ -161,14 +161,14 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
       </el-form>
 
       <div class="cfg-actions">
-        <el-button :icon="Back" round @click="backToScan">返回</el-button>
-        <el-button type="primary" round :icon="Connection" @click="startPairing">开始配对</el-button>
+        <el-button :icon="Back" @click="backToScan">返回</el-button>
+        <el-button type="primary" :icon="Connection" @click="startPairing">开始配对</el-button>
       </div>
     </div>
 
     <!-- 步骤三: 连接中 -->
     <div v-else-if="step === 'connecting'" class="connecting">
-      <div class="conn-icon" :style="{ '--accent': selectedCat.accent }">
+      <div class="conn-icon" :style="{ '--accent': selectedCat.accent, '--on-accent': selectedCat.onAccent }">
         <DeviceIcon :type="selected.type" :size="34" />
       </div>
       <p class="conn-title">正在与「{{ form.name }}」建立连接</p>
@@ -182,8 +182,8 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
       <h3>配对成功</h3>
       <p class="done-sub">「{{ lastAdded?.name }}」已加入 {{ lastAdded?.room }}，并显示在总控面板。</p>
       <div class="done-actions">
-        <el-button round @click="addAnother">继续添加</el-button>
-        <el-button type="primary" round @click="finish">完成</el-button>
+        <el-button @click="addAnother">继续添加</el-button>
+        <el-button type="primary" @click="finish">完成</el-button>
       </div>
     </div>
   </el-dialog>
@@ -207,27 +207,31 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
   margin: 4px 0 6px;
 }
 .step-dot {
+  box-sizing: border-box;
+  flex: 0 0 28px;
   width: 28px;
   height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   border-radius: 50%;
-  display: grid;
-  place-items: center;
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 700;
   background: var(--surface-2);
   color: var(--text-faint);
-  border: 1px solid var(--border);
-  transition: all 0.25s ease;
+  border: 2px solid var(--border);
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 .step-dot.on {
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   border-color: var(--brand);
 }
 .step-dot.done {
-  background: color-mix(in srgb, var(--brand) 18%, transparent);
-  color: var(--brand);
-  border-color: transparent;
+  background: var(--p4-yellow);
+  color: #111;
+  border-color: var(--ink);
 }
 .step-line {
   width: 48px;
@@ -259,8 +263,8 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
 }
 .ring {
   position: absolute;
+  border: 1.5px solid var(--border-strong);
   border-radius: 50%;
-  border: 1px solid var(--border-strong);
   inset: 0;
 }
 .r2 { inset: 18px; }
@@ -270,18 +274,27 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
   height: 44px;
   border-radius: 50%;
   background: var(--brand-grad);
-  color: #fff;
+  color: var(--p4-yellow);
+  border: 2px solid var(--ink);
   display: grid;
   place-items: center;
   z-index: 2;
-  box-shadow: 0 6px 18px rgba(91, 108, 255, 0.45);
 }
 .sweep {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0deg, color-mix(in srgb, var(--brand) 35%, transparent) 60deg, transparent 90deg);
-  animation: spin 1.4s linear infinite;
+  overflow: hidden;
+  /* 雷达波束: 带亮边的扇形扫掠 */
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--p4-yellow) 10%, transparent) 38deg,
+    color-mix(in srgb, var(--p4-yellow-deep) 55%, transparent) 68deg,
+    var(--p4-yellow-deep) 72deg,
+    transparent 72.5deg
+  );
+  animation: spin 1.6s linear infinite;
 }
 .radar.active .ring {
   animation: pulse 1.8s ease-out infinite;
@@ -312,7 +325,6 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
   align-items: center;
   gap: 12px;
   padding: 11px 14px;
-  border-radius: 13px;
   border: 1px solid var(--border);
   background: var(--surface-2);
   cursor: pointer;
@@ -326,7 +338,7 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
 .found-icon {
   width: 38px;
   height: 38px;
-  border-radius: 11px;
+  border-radius: var(--r-sm);
   display: grid;
   place-items: center;
   color: var(--accent);
@@ -338,7 +350,6 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
 .signal { display: flex; align-items: flex-end; gap: 3px; height: 16px; }
 .signal i {
   width: 4px;
-  border-radius: 2px;
   background: var(--border-strong);
 }
 .signal i:nth-child(1) { height: 6px; }
@@ -353,7 +364,6 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
   align-items: center;
   gap: 14px;
   padding: 16px;
-  border-radius: 16px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   margin-bottom: 18px;
@@ -361,10 +371,10 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
 .sel-icon {
   width: 52px;
   height: 52px;
-  border-radius: 14px;
+  border-radius: var(--r-md);
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--on-accent, var(--on-brand));
   background: var(--accent);
 }
 .sel-model { font-weight: 650; font-size: 15px; }
@@ -381,7 +391,7 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
 .conn-icon {
   width: 74px;
   height: 74px;
-  border-radius: 22px;
+  border-radius: 50%;
   margin: 0 auto 18px;
   display: grid;
   place-items: center;
@@ -402,12 +412,13 @@ const selectedCat = computed(() => (selected.value ? getCategory(selected.value.
   width: 80px;
   height: 80px;
   border-radius: 50%;
+  border: 3px solid #fff;
   margin: 0 auto 18px;
   display: grid;
   place-items: center;
   color: #fff;
-  background: linear-gradient(135deg, #18b368, #15d18a);
-  box-shadow: 0 12px 30px rgba(24, 179, 104, 0.4);
+  background: var(--p4-blue);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--p4-blue) 22%, transparent);
   animation: pop 0.4s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
 @keyframes pop {

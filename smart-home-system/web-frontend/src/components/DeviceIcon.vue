@@ -36,8 +36,8 @@ const segments = computed(() => (paths[props.type] || paths.default).split('|'))
     fill="none"
     :stroke-width="stroke"
     stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
+    stroke-linecap="square"
+    stroke-linejoin="miter"
     aria-hidden="true"
   >
     <path v-for="(d, i) in segments" :key="i" :d="d" />

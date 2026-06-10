@@ -28,7 +28,7 @@ const grouped = computed(() => {
         <h1>房间</h1>
         <p>按空间查看与管理你的设备</p>
       </div>
-      <el-button type="primary" round :icon="Plus" @click="openPairing">添加家电</el-button>
+      <el-button type="primary" :icon="Plus" @click="openPairing">添加家电</el-button>
     </header>
 
     <template v-if="grouped.length">
@@ -46,7 +46,7 @@ const grouped = computed(() => {
     <section v-else class="empty glass">
       <h3>暂无设备</h3>
       <p>添加设备后将按房间自动归类。</p>
-      <el-button type="primary" round :icon="Plus" @click="openPairing">配对新设备</el-button>
+      <el-button type="primary" :icon="Plus" @click="openPairing">配对新设备</el-button>
     </section>
   </div>
 </template>
@@ -58,12 +58,20 @@ const grouped = computed(() => {
   justify-content: space-between;
   align-items: flex-end;
 }
-.head h1 { font-size: 28px; font-weight: 720; }
+.head h1 { font-size: 28px; font-weight: 800; }
 .head p { color: var(--text-faint); font-size: 14px; margin-top: 4px; }
 
 .room { display: flex; flex-direction: column; gap: 14px; }
 .room-head { display: flex; align-items: baseline; gap: 12px; }
-.room-head h2 { font-size: 18px; font-weight: 650; }
+.room-head h2 {
+  font-size: 17px;
+  font-weight: 800;
+  background: var(--ink);
+  color: var(--p4-yellow);
+  padding: 5px 16px;
+  border-radius: var(--r-sm);
+  box-shadow: 3px 3px 0 var(--p4-yellow);
+}
 .room-meta { font-size: 13px; color: var(--text-faint); }
 
 .grid {
@@ -75,7 +83,6 @@ const grouped = computed(() => {
 .empty {
   text-align: center;
   padding: 60px 30px;
-  border-radius: 24px;
 }
 .empty h3 { font-size: 19px; margin-bottom: 8px; }
 .empty p { color: var(--text-faint); margin-bottom: 20px; }

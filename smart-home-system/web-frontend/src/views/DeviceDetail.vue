@@ -15,6 +15,7 @@ const device = computed(() => store.getById(route.params.id))
 const cat = computed(() => (device.value ? getCategory(device.value.type) : null))
 const status = computed(() => (device.value ? cat.value.status(device.value.state) : null))
 const accent = computed(() => cat.value?.accent || 'var(--brand)')
+const onAccent = computed(() => cat.value?.onAccent || 'var(--on-brand)')
 
 // 是否断电(用于禁用从属控件)
 const powered = computed(() => {
@@ -116,7 +117,7 @@ onUnmounted(() => clearInterval(timer))
 </script>
 
 <template>
-  <div v-if="device" class="detail" :style="{ '--accent': accent }">
+  <div v-if="device" class="detail" :style="{ '--accent': accent, '--on-accent': onAccent }">
     <!-- 顶部操作条 -->
     <div class="topline">
       <button class="back" @click="router.back()">
@@ -290,8 +291,8 @@ onUnmounted(() => clearInterval(timer))
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button round @click="renaming = false">取消</el-button>
-        <el-button type="primary" round @click="saveRename">保存</el-button>
+        <el-button @click="renaming = false">取消</el-button>
+        <el-button type="primary" @click="saveRename">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -300,7 +301,7 @@ onUnmounted(() => clearInterval(timer))
   <div v-else class="missing glass">
     <h3>设备不存在</h3>
     <p>该设备可能已被移除。</p>
-    <el-button type="primary" round @click="router.push('/')">返回总控面板</el-button>
+    <el-button type="primary" @click="router.push('/')">返回总控面板</el-button>
   </div>
 </template>
 
@@ -327,7 +328,6 @@ onUnmounted(() => clearInterval(timer))
   font-weight: 550;
   cursor: pointer;
   padding: 6px 8px;
-  border-radius: 10px;
   transition: all 0.18s ease;
 }
 .back:hover { color: var(--brand); background: var(--surface-2); }
@@ -335,7 +335,6 @@ onUnmounted(() => clearInterval(timer))
 .ico {
   width: 38px;
   height: 38px;
-  border-radius: 11px;
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text-soft);
@@ -352,7 +351,6 @@ onUnmounted(() => clearInterval(timer))
 .spotlight {
   position: relative;
   padding: 30px 32px;
-  border-radius: 24px;
   overflow: hidden;
 }
 .spot-glow {
@@ -372,7 +370,6 @@ onUnmounted(() => clearInterval(timer))
 .spot-icon {
   width: 84px;
   height: 84px;
-  border-radius: 24px;
   display: grid;
   place-items: center;
   color: var(--accent);
@@ -393,7 +390,6 @@ onUnmounted(() => clearInterval(timer))
   font-size: 12.5px;
   font-weight: 600;
   padding: 5px 12px;
-  border-radius: 9px;
   background: var(--surface-2);
   color: var(--text-soft);
   display: inline-flex;
@@ -401,7 +397,7 @@ onUnmounted(() => clearInterval(timer))
   gap: 6px;
 }
 .tag.on { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-faint); }
+.dot { border-radius: 50%; width: 7px; height: 7px; background: var(--text-faint); }
 .dot.online { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
 
 /* 环形 */
@@ -441,8 +437,8 @@ onUnmounted(() => clearInterval(timer))
 .big-switch {
   width: 62px;
   height: 34px;
-  border-radius: 22px;
   border: none;
+  border-radius: var(--r-full);
   background: var(--border-strong);
   position: relative;
   cursor: pointer;
@@ -457,15 +453,15 @@ onUnmounted(() => clearInterval(timer))
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  background: var(--on-brand);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .big-switch.on .bs-knob { transform: translateX(28px); }
 
 /* 面板 */
-.panel { padding: 24px 26px; border-radius: 22px; }
-.panel-title { font-size: 15px; font-weight: 650; margin-bottom: 18px; color: var(--text-soft); }
+.panel { padding: 24px 26px; }
+.panel-title { font-size: 15px; font-weight: 700; margin-bottom: 18px; color: var(--text-soft); }
 
 .ctrl-list { display: flex; flex-direction: column; gap: 22px; }
 .ctrl { transition: opacity 0.2s ease; }
@@ -484,7 +480,7 @@ onUnmounted(() => clearInterval(timer))
 }
 .seg-btn {
   padding: 9px 16px;
-  border-radius: 11px;
+  border-radius: var(--r-full);
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text-soft);
@@ -494,10 +490,10 @@ onUnmounted(() => clearInterval(timer))
   transition: all 0.18s ease;
 }
 .seg-btn:hover:not(:disabled) { color: var(--text); border-color: var(--accent); }
-.seg-btn.on { color: #fff; background: var(--accent); border-color: var(--accent); }
+.seg-btn.on { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
 .seg-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .seg.actions .seg-btn { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); border-color: transparent; }
-.seg.actions .seg-btn:hover { background: var(--accent); color: #fff; }
+.seg.actions .seg-btn:hover { background: var(--accent); color: var(--on-accent); }
 
 /* 读数 */
 .metric-grid {
@@ -507,7 +503,7 @@ onUnmounted(() => clearInterval(timer))
 }
 .metric {
   padding: 16px 18px;
-  border-radius: 16px;
+  border-radius: var(--r-md);
   background: var(--surface-2);
   border: 1px solid var(--border);
 }
@@ -517,14 +513,12 @@ onUnmounted(() => clearInterval(timer))
 .metric-bar {
   margin-top: 10px;
   height: 6px;
-  border-radius: 4px;
   background: var(--border);
   overflow: hidden;
 }
 .metric-bar span {
   display: block;
   height: 100%;
-  border-radius: 4px;
   background: var(--accent);
   transition: width 0.5s ease;
 }
@@ -546,7 +540,6 @@ onUnmounted(() => clearInterval(timer))
 .missing {
   text-align: center;
   padding: 70px 30px;
-  border-radius: 24px;
 }
 .missing h3 { font-size: 20px; margin-bottom: 8px; }
 .missing p { color: var(--text-faint); margin-bottom: 20px; }

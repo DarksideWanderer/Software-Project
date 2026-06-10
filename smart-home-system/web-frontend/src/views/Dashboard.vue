@@ -134,7 +134,7 @@ onUnmounted(() => clearInterval(timer))
           :key="c.type"
           class="chip"
           :class="{ on: activeFilter === c.type }"
-          :style="{ '--accent': c.accent }"
+          :style="{ '--accent': c.accent, '--on-accent': c.onAccent }"
           @click="activeFilter = c.type"
         >
           <DeviceIcon :type="c.type" :size="15" />
@@ -164,7 +164,7 @@ onUnmounted(() => clearInterval(timer))
       <div class="empty-icon"><el-icon :size="34"><Plus /></el-icon></div>
       <h3>还没有匹配的设备</h3>
       <p>通过配对添加你的第一台智能家电，开始打造全屋智能。</p>
-      <el-button type="primary" round :icon="Plus" @click="openPairing">配对新设备</el-button>
+      <el-button type="primary" :icon="Plus" @click="openPairing">配对新设备</el-button>
     </section>
   </div>
 </template>
@@ -183,18 +183,26 @@ onUnmounted(() => clearInterval(timer))
   align-items: center;
   gap: 24px;
   padding: 30px 32px;
-  border-radius: 24px;
   flex-wrap: wrap;
+  background:
+    radial-gradient(rgba(17, 17, 17, 0.08) 1.2px, transparent 1.2px) 0 0 / 12px 12px,
+    var(--p4-yellow);
+  border-color: var(--ink);
+  color: #111;
+  box-shadow: 6px 6px 0 var(--ink);
 }
 .hero-greet {
-  color: var(--text-faint);
+  color: rgba(17, 17, 17, 0.62);
   font-size: 14px;
   margin-bottom: 4px;
 }
 .hero-title {
-  font-size: 30px;
-  font-weight: 720;
+  font-size: 32px;
+  font-weight: 900;
   margin-bottom: 22px;
+  color: #111;
+  display: inline-block;
+  text-shadow: 3px 3px 0 #fff;
 }
 .stat-row {
   display: flex;
@@ -207,19 +215,19 @@ onUnmounted(() => clearInterval(timer))
 }
 .stat-val {
   font-size: 26px;
-  font-weight: 700;
-  color: var(--text);
+  font-weight: 800;
+  color: #111;
 }
 .stat-val i {
   font-size: 14px;
   font-weight: 500;
-  color: var(--text-faint);
+  color: rgba(17, 17, 17, 0.55);
   font-style: normal;
   margin-left: 3px;
 }
 .stat-label {
   font-size: 12.5px;
-  color: var(--text-faint);
+  color: rgba(17, 17, 17, 0.62);
   margin-top: 2px;
 }
 
@@ -228,10 +236,11 @@ onUnmounted(() => clearInterval(timer))
   align-items: center;
   gap: 22px;
   padding: 18px 26px;
-  border-radius: 18px;
   background: var(--brand-grad);
   color: #fff;
-  box-shadow: 0 12px 30px rgba(91, 108, 255, 0.35);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-md);
+  box-shadow: 4px 4px 0 rgba(17, 17, 17, 0.85);
 }
 .env-item {
   display: flex;
@@ -240,7 +249,8 @@ onUnmounted(() => clearInterval(timer))
 }
 .env-num {
   font-size: 24px;
-  font-weight: 720;
+  font-weight: 800;
+  color: var(--p4-yellow);
 }
 .env-num i {
   font-size: 13px;
@@ -269,7 +279,6 @@ onUnmounted(() => clearInterval(timer))
 .scene {
   text-align: left;
   padding: 16px 18px;
-  border-radius: 16px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -277,9 +286,9 @@ onUnmounted(() => clearInterval(timer))
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .scene:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow);
-  border-color: var(--brand);
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--p4-yellow-deep);
+  border-color: var(--ink);
 }
 .scene-title {
   font-weight: 650;
@@ -305,11 +314,12 @@ onUnmounted(() => clearInterval(timer))
 }
 .chip {
   --accent: var(--brand);
+  --on-accent: var(--on-brand);
+  border-radius: var(--r-full);
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  border-radius: 11px;
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text-soft);
@@ -323,7 +333,7 @@ onUnmounted(() => clearInterval(timer))
   border-color: var(--accent);
 }
 .chip.on {
-  color: #fff;
+  color: var(--on-accent);
   background: var(--accent);
   border-color: var(--accent);
 }
@@ -339,7 +349,6 @@ onUnmounted(() => clearInterval(timer))
 }
 .add-card {
   border: 1.5px dashed var(--border-strong);
-  border-radius: 20px;
   background: transparent;
   color: var(--text-faint);
   cursor: pointer;
@@ -363,12 +372,10 @@ onUnmounted(() => clearInterval(timer))
 .empty {
   text-align: center;
   padding: 60px 30px;
-  border-radius: 24px;
 }
 .empty-icon {
   width: 72px;
   height: 72px;
-  border-radius: 22px;
   margin: 0 auto 18px;
   display: grid;
   place-items: center;

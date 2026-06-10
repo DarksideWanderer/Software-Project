@@ -15,6 +15,7 @@ const store = useDeviceStore()
 const cat = computed(() => getCategory(props.device.type))
 const status = computed(() => cat.value.status(props.device.state))
 const accent = computed(() => cat.value.accent)
+const onAccent = computed(() => cat.value.onAccent || 'var(--on-brand)')
 
 // 是否支持卡片上的快捷开关
 const quickable = computed(() =>
@@ -35,7 +36,7 @@ const onQuick = () => {
   <article
     class="card glass"
     :class="{ active: status.active, offline: !device.online }"
-    :style="{ '--accent': accent }"
+    :style="{ '--accent': accent, '--on-accent': onAccent }"
     @click="open"
   >
     <div class="glow" />
@@ -74,7 +75,6 @@ const onQuick = () => {
 .card {
   position: relative;
   padding: 18px;
-  border-radius: 20px;
   cursor: pointer;
   overflow: hidden;
   transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
@@ -95,7 +95,7 @@ const onQuick = () => {
 .glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(120px 80px at 80% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%);
+  background: radial-gradient(120px 80px at 80% 0%, color-mix(in srgb, var(--p4-yellow) 30%, transparent), transparent 70%);
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
@@ -112,29 +112,31 @@ const onQuick = () => {
 .icon-wrap {
   width: 46px;
   height: 46px;
-  border-radius: 14px;
   display: grid;
   place-items: center;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--text-soft);
+  border: 2px solid var(--border);
+  border-radius: var(--r-md);
+  background: transparent;
   transition: all 0.25s ease;
 }
 .card.active .icon-wrap {
-  color: #fff;
-  background: var(--accent);
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 50%, transparent);
+  color: #111;
+  border-color: var(--ink);
+  background: var(--p4-yellow);
+  box-shadow: 3px 3px 0 var(--ink);
 }
 
 .state-dot {
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--text-faint);
   margin-top: 6px;
 }
 .state-dot.on {
-  background: var(--accent);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+  background: var(--p4-yellow);
+  box-shadow: 0 0 0 2px var(--ink);
 }
 
 .body { flex: 1; }
@@ -169,7 +171,7 @@ const onQuick = () => {
 .quick {
   width: 46px;
   height: 27px;
-  border-radius: 20px;
+  border-radius: var(--r-full);
   border: none;
   background: var(--border-strong);
   position: relative;
@@ -191,8 +193,8 @@ const onQuick = () => {
   width: 21px;
   height: 21px;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+  background: var(--on-brand);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .quick.on .knob {

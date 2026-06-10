@@ -192,11 +192,12 @@ function runExample(cmd) {
 <style scoped>
 .voice { display: flex; flex-direction: column; gap: 24px; }
 .head { display: flex; justify-content: space-between; align-items: flex-start; }
-.head h1 { font-size: 28px; font-weight: 720; }
+.head h1 { font-size: 28px; font-weight: 800; }
 .head p { color: var(--text-faint); font-size: 14px; margin-top: 4px; }
 .engine-badge {
   display: inline-flex; align-items: center; gap: 7px;
-  padding: 7px 14px; border-radius: 11px;
+  padding: 7px 14px;
+  border-radius: var(--r-full);
   font-size: 12.5px; font-weight: 600;
   color: var(--text-soft); background: var(--surface-2); border: 1px solid var(--border);
 }
@@ -204,24 +205,33 @@ function runExample(cmd) {
 .engine-badge .ed { width: 7px; height: 7px; border-radius: 50%; background: var(--text-faint); }
 .engine-badge.ai .ed { background: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 22%, transparent); }
 
-.stage { border-radius: 24px; padding: 40px 32px 30px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+.stage {
+  padding: 40px 32px 30px; display: flex; flex-direction: column; align-items: center; gap: 22px;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 4px),
+    radial-gradient(60% 85% at 50% 22%, rgba(255, 243, 0, 0.28), transparent 72%),
+    #0a0a0a;
+  border-color: var(--ink);
+  box-shadow: 6px 6px 0 var(--p4-yellow-deep);
+}
 
 .orb { position: relative; width: 150px; height: 150px; border: none; background: transparent; cursor: pointer; display: grid; place-items: center; }
 .orb-core {
-  position: relative; z-index: 3; width: 104px; height: 104px; border-radius: 50%;
-  background: var(--brand-grad); color: #fff; display: grid; place-items: center;
-  box-shadow: 0 14px 38px rgba(91, 108, 255, 0.45); transition: transform 0.2s ease;
+  position: relative; z-index: 3; width: 104px; height: 104px; 
+  border-radius: 50%;
+  background: var(--p4-yellow); color: #111; display: grid; place-items: center;
+  border: 3px solid #fff; box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.12); transition: transform 0.2s ease;
 }
 .orb:hover .orb-core { transform: scale(1.05); }
 .orb.listening .orb-core, .orb.busy .orb-core { animation: corePulse 1.1s ease-in-out infinite; }
 @keyframes corePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-.ring { position: absolute; border-radius: 50%; inset: 0; border: 1.5px solid color-mix(in srgb, var(--brand) 40%, transparent); opacity: 0; }
+.ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--p4-yellow) 60%, transparent); opacity: 0; }
 .orb.listening .ring { animation: ripple 1.8s ease-out infinite; }
 .orb.listening .r2 { animation-delay: 0.45s; }
 .orb.listening .r3 { animation-delay: 0.9s; }
 @keyframes ripple { 0% { transform: scale(0.7); opacity: 0.8; } 100% { transform: scale(1.25); opacity: 0; } }
 .eq { position: absolute; z-index: 4; bottom: 30px; display: flex; align-items: flex-end; gap: 3px; height: 22px; }
-.eq i { width: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.9); animation: bounce 0.9s ease-in-out infinite; }
+.eq i { width: 4px; background: rgba(255, 255, 255, 0.9); animation: bounce 0.9s ease-in-out infinite; }
 .eq i:nth-child(1) { animation-delay: 0s; }
 .eq i:nth-child(2) { animation-delay: 0.15s; }
 .eq i:nth-child(3) { animation-delay: 0.3s; }
@@ -229,13 +239,13 @@ function runExample(cmd) {
 .eq i:nth-child(5) { animation-delay: 0.6s; }
 @keyframes bounce { 0%, 100% { height: 6px; } 50% { height: 20px; } }
 
-.orb-status { font-size: 16px; color: var(--text-soft); text-align: center; min-height: 24px; max-width: 520px; font-weight: 500; }
-.orb-status.live { color: var(--brand); }
+.orb-status { font-size: 16px; color: rgba(255, 255, 255, 0.8); text-align: center; min-height: 24px; max-width: 520px; font-weight: 500; }
+.orb-status.live { color: var(--p4-yellow); }
 
-.result { display: inline-flex; align-items: center; gap: 10px; padding: 10px 18px; border-radius: 12px; font-size: 14px; font-weight: 550; }
+.result { display: inline-flex; align-items: center; gap: 10px; padding: 10px 18px; border-radius: var(--r-full); font-size: 14px; font-weight: 550; }
 .result.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
 .result.fail { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
-.result-engine { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 7px; background: var(--surface-2); color: var(--text-faint); }
+.result-engine { font-size: 11px; font-weight: 600; padding: 2px 8px; background: var(--surface-2); color: var(--text-faint); }
 
 .unsupported { font-size: 12.5px; color: var(--text-faint); text-align: center; max-width: 440px; }
 
@@ -245,23 +255,23 @@ function runExample(cmd) {
 .block-title { font-size: 15px; font-weight: 650; color: var(--text-soft); margin-bottom: 14px; }
 .chips { display: flex; flex-wrap: wrap; gap: 10px; }
 .ex-chip {
-  padding: 9px 16px; border-radius: 11px; border: 1px solid var(--border);
+  padding: 9px 16px; border: 1px solid var(--border);
   background: var(--surface-2); color: var(--text-soft); font-size: 13.5px; font-weight: 500;
   cursor: pointer; transition: all 0.18s ease;
 }
 .ex-chip:hover { color: var(--brand); border-color: var(--brand); transform: translateY(-2px); }
 
-.history { border-radius: 22px; padding: 24px 26px; }
+.history { padding: 24px 26px; }
 .hist-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .hist { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .hist:last-child { border-bottom: none; }
-.hist-dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
+.hist-dot { border-radius: 50%; width: 26px; height: 26px; display: grid; place-items: center; flex-shrink: 0; }
 .hist-dot.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 16%, transparent); }
 .hist-dot.fail { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
 .hist-body { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .hist-text { font-size: 14px; font-weight: 550; }
 .hist-sum { font-size: 12.5px; color: var(--text-faint); margin-top: 2px; }
-.hist-engine { font-size: 11px; color: var(--text-faint); padding: 2px 8px; border-radius: 7px; background: var(--surface-2); white-space: nowrap; }
+.hist-engine { font-size: 11px; color: var(--text-faint); padding: 2px 8px; background: var(--surface-2); white-space: nowrap; }
 .hist-time { font-size: 12px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
 
 @media (max-width: 600px) {

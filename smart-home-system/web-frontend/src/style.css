@@ -1,59 +1,54 @@
 /* ============================================================
    全屋智能中控系统 · 设计系统 (Design Tokens)
-   深浅双主题, 营造简洁高级感的视觉风格。
+   视觉风格参考《ペルソナ４ リバイバル》官网 (p4re.jp):
+   高对比黄(#FFF300)×黑×白、硬边框、硬投影、斜切几何、
+   半调网点/扫描线纹理、粗壮斜体标题。全站零圆角。
    ============================================================ */
 
 :root {
-  /* 品牌色 */
-  --brand: #5b6cff;
-  --brand-soft: #8a96ff;
-  --brand-grad: linear-gradient(135deg, #5b6cff 0%, #7a5cff 50%, #00d4ff 120%);
+  /* 品牌色: 黄(主) / 黑 / 白 / 蓝(少量, 与白搭配) */
+  --p4-yellow: #fff300;
+  --p4-yellow-deep: #f0d800;
+  --p4-blue: #2ba6e0;
+  --ink: #111111;
 
-  /* 浅色主题 */
-  --bg: #eef1f8;
-  --bg-glow-1: rgba(91, 108, 255, 0.18);
-  --bg-glow-2: rgba(0, 212, 255, 0.14);
-  --surface: rgba(255, 255, 255, 0.78);
+  /* 圆角尺度: 柔和但保留海报感 */
+  --r-sm: 6px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-full: 999px;
+
+  /* 浅色主题: 白底·黑字·黄高亮 */
+  --brand: #111111;                 /* 功能性强调(文字/开关/链接) */
+  --brand-soft: #444444;
+  --highlight: var(--p4-yellow);    /* 高亮背景色 */
+  --on-brand: #ffffff;              /* brand 背景上的前景色 */
+  --brand-grad:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 4px),
+    radial-gradient(90% 130% at 88% -15%, rgba(255, 243, 0, 0.22), transparent 55%),
+    linear-gradient(135deg, #1c1c1c 0%, #000000 100%);
+
+  --bg: #f4f2ea;
+  --bg-glow-1: transparent;
+  --bg-glow-2: transparent;
+  --surface: #ffffff;
   --surface-solid: #ffffff;
-  --surface-2: rgba(255, 255, 255, 0.55);
-  --surface-hover: rgba(255, 255, 255, 0.95);
-  --border: rgba(17, 24, 60, 0.08);
-  --border-strong: rgba(17, 24, 60, 0.14);
-  --text: #1a1f36;
-  --text-soft: #5a6178;
-  --text-faint: #8a90a6;
-  --shadow-sm: 0 2px 8px rgba(20, 30, 80, 0.06);
-  --shadow: 0 12px 30px rgba(20, 30, 80, 0.10);
-  --shadow-lg: 0 24px 60px rgba(20, 30, 80, 0.16);
-  --ok: #18b368;
-  --warn: #f1a623;
-  --danger: #f0506e;
+  --surface-2: #f0eee4;
+  --surface-hover: #fffbd6;
+  --border: #111111;
+  --border-strong: #111111;
+  --text: #111111;
+  --text-soft: #3d3d3d;
+  --text-faint: #777770;
+  /* 硬投影 (poster 风, 无模糊) */
+  --shadow-sm: 3px 3px 0 rgba(17, 17, 17, 0.9);
+  --shadow: 5px 5px 0 rgba(17, 17, 17, 0.9);
+  --shadow-lg: 4px 4px 0 var(--p4-yellow-deep), 5px 5px 0 #111;
+  --ok: #2ba6e0;
+  --warn: #f08300;
+  --danger: #e60012;
 
   color-scheme: light;
-}
-
-:root.dark {
-  /* 深色主题 */
-  --bg: #0a0c16;
-  --bg-glow-1: rgba(91, 108, 255, 0.22);
-  --bg-glow-2: rgba(0, 212, 255, 0.12);
-  --surface: rgba(26, 30, 48, 0.66);
-  --surface-solid: #161a2b;
-  --surface-2: rgba(255, 255, 255, 0.04);
-  --surface-hover: rgba(40, 46, 72, 0.8);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --text: #eef0f8;
-  --text-soft: #aab1c9;
-  --text-faint: #6f7796;
-  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
-  --shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 28px 70px rgba(0, 0, 0, 0.55);
-  --ok: #2ad17f;
-  --warn: #f6b73c;
-  --danger: #ff5d7a;
-
-  color-scheme: dark;
 }
 
 * {
@@ -66,27 +61,32 @@ body,
   height: 100%;
 }
 
+:root {
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: var(--font-body);
+}
+
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: var(--font-body);
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: 0.1px;
+  font-variant-numeric: tabular-nums; /* 仪表盘数字等宽对齐 */
   transition: background 0.4s ease, color 0.3s ease;
 }
 
-/* 背景氛围光晕 */
+/* 背景纹理: 半调网点 + 黄色斜切饰带 (P4RE 招牌元素) */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(60vw 50vh at 12% -5%, var(--bg-glow-1), transparent 60%),
-    radial-gradient(50vw 50vh at 100% 8%, var(--bg-glow-2), transparent 55%);
+  z-index: -2;
+  background-image: radial-gradient(rgba(17, 17, 17, 0.07) 1.2px, transparent 1.2px);
+  background-size: 14px 14px;
   pointer-events: none;
 }
 
@@ -95,104 +95,171 @@ a {
   text-decoration: none;
 }
 
+/* 标题: 粗壮斜体, Persona 式倾斜冲击感 */
 h1, h2, h3, h4 {
   margin: 0;
-  font-weight: 650;
+  font-weight: 800;
   color: var(--text);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
-/* ---------- 通用玻璃卡片 ---------- */
+::selection {
+  background: var(--p4-yellow);
+  color: #111;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ---------- 通用卡片: 平面硬边 (原玻璃拟态改为海报风) ---------- */
 .glass {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   box-shadow: var(--shadow-sm);
 }
 
-/* ---------- 滚动条 ---------- */
+/* ---------- 滚动条: 方形 ---------- */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 8px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
+  background: var(--ink);
+  border: 2px solid var(--p4-yellow);
+  border-radius: var(--r-full);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-faint);
-  background-clip: padding-box;
+  background: var(--p4-yellow-deep);
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* ---------- 进出动画 ---------- */
-.fade-enter-active,
+/* ---------- 页面切换: 斜切扫光揭示 (参考 p4re.jp 的斜向 wipe 转场) ----------
+   旧页快速淡出, 新页由一条斜线从左向右扫过揭示, 干脆利落。 */
 .fade-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
-}
-.fade-enter-from {
-  opacity: 0;
-  transform: translateY(8px);
+  transition: opacity 0.16s ease;
 }
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+}
+.fade-enter-active {
+  transition: clip-path 0.48s cubic-bezier(0.25, 1, 0.3, 1);
+}
+.fade-enter-from {
+  clip-path: polygon(0% 0%, 0% 0%, -30% 100%, -30% 100%);
+}
+.fade-enter-to {
+  clip-path: polygon(0% 0%, 130% 0%, 100% 100%, -30% 100%);
 }
 
 /* ============================================================
-   Element Plus 主题适配
+   Element Plus 主题适配 (P4RE)
    ============================================================ */
 :root {
-  --el-color-primary: #5b6cff;
-  --el-color-primary-light-3: #8a96ff;
-  --el-color-primary-light-5: #aab2ff;
-  --el-color-primary-light-7: #ccd2ff;
-  --el-color-primary-light-9: #eef0ff;
-  --el-color-primary-dark-2: #4453e0;
-  --el-border-radius-base: 12px;
+  --el-color-primary: #111111;
+  --el-color-primary-light-3: #444444;
+  --el-color-primary-light-5: #6e6e6e;
+  --el-color-primary-light-7: #b5b5ad;
+  --el-color-primary-light-9: #efedd9;
+  --el-color-primary-dark-2: #000000;
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 999px;
+  --el-border-radius-circle: 100%;
   --el-font-family: inherit;
 }
 
-:root.dark {
-  --el-bg-color: var(--surface-solid);
-  --el-bg-color-overlay: #1b2034;
-  --el-text-color-primary: var(--text);
-  --el-text-color-regular: var(--text-soft);
-  --el-border-color: var(--border-strong);
-  --el-border-color-light: var(--border);
-  --el-fill-color-blank: var(--surface-solid);
-  --el-mask-color: rgba(0, 0, 0, 0.6);
-}
-
-/* 对话框 / 抽屉圆角与玻璃感 */
+/* 对话框 / 抽屉: 硬边框 + 硬投影 */
 .el-dialog,
 .el-drawer {
-  border-radius: 20px !important;
+  border: 2px solid var(--border) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
   overflow: hidden;
 }
 .el-overlay-dialog .el-dialog {
   --el-dialog-bg-color: var(--surface-solid);
 }
 
-/* 让按钮更精致 */
+/* 主按钮: 黄底黑字 + 硬投影, hover 反转为黑底黄字 */
 .el-button {
-  font-weight: 550;
+  font-weight: 700;
+  border-width: 2px;
+  border-radius: var(--r-full);
 }
+.el-button--primary {
+  --el-button-bg-color: var(--p4-yellow);
+  --el-button-border-color: #111;
+  --el-button-text-color: #111;
+  --el-button-hover-bg-color: #111;
+  --el-button-hover-border-color: #111;
+  --el-button-hover-text-color: var(--p4-yellow);
+  --el-button-active-bg-color: #000;
+  --el-button-active-border-color: #000;
+  --el-button-active-text-color: var(--p4-yellow);
+  box-shadow: 3px 3px 0 rgba(17, 17, 17, 0.9);
+}
+.el-button--primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(17, 17, 17, 0.9);
+}
+
+/* 开关 / 滑块 */
 .el-switch.is-checked .el-switch__core {
   background: var(--brand) !important;
   border-color: var(--brand) !important;
 }
-
-/* 滑块品牌色 */
 .el-slider__bar {
   background: var(--brand) !important;
 }
 .el-slider__button {
   border-color: var(--brand) !important;
+}
+.el-progress-bar__inner {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--p4-yellow) 0 10px,
+    #111 10px 20px
+  ) !important;
+}
+
+/* 输入框: 硬边 */
+.el-input__wrapper,
+.el-textarea__inner {
+  box-shadow: 0 0 0 2px var(--border) inset !important;
+}
+.el-input__wrapper.is-focus,
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 2px var(--brand) inset, 3px 3px 0 rgba(17, 17, 17, 0.25) !important;
+}
+
+/* ---------- P4RE 附加装饰 ---------- */
+
+/* 面板标题: 黄色色带 + 斜体 (P4RE 小节标题样式) */
+.panel-title,
+.block-title {
+  border-left: 6px solid var(--p4-yellow);
+  padding-left: 10px;
+  box-shadow: inset 8px 0 0 -6px var(--ink);
+}
+
+
+/* ---------- 柔化补充 ---------- */
+.el-input__wrapper { border-radius: var(--r-full); }
+.el-message { border-radius: var(--r-full); border: 2px solid var(--ink); }
+
+/* 弹窗内容滚动条出现/消失时避免水平跳动 */
+.el-dialog__body {
+  scrollbar-gutter: stable;
+}
+
+/* 配对向导: 各步骤内容高度不同, 设最小高度避免弹窗高度跳变 */
+.pair-dialog .el-dialog__body {
+  min-height: 340px;
 }
