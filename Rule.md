@@ -70,15 +70,14 @@ public:
 ```
 
 ### 3.2 Python 示例 (FastAPI Controller)
+为了统一 C++ 与 Python 的文档生成系统，Python 同样建议使用 Doxygen 风格的 `#` 或 `##` 注释。
+
 ```python
+## @brief 控制灯光亮度的 API 接口
+# @param light_id 灯具的唯一标识符
+# @param brightness 亮度值 (0.0 - 1.0)
+# @return 返回执行状态结果字典
 def control_light(light_id: str, brightness: float):
-    \"\"\"
-    控制灯光亮度的 API 接口
-    
-    :param light_id: 灯具的唯一标识符
-    :param brightness: 亮度值 (0.0 - 1.0)
-    :return: 执行状态结果字典
-    \"\"\"
     pass
 ```
 
