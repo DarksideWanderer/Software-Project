@@ -1,8 +1,33 @@
 """AI 服务层连通性测试"""
 
+import os
+from unittest.mock import patch
+
 import pytest
 from httpx import AsyncClient, ASGITransport
 from src.main import app
+
+
+class _MockAudio:
+    url = "https://example.com/audio.wav"
+    id = "audio_test_id"
+    expires_at = 1766113409
+
+
+class _MockOutput:
+    audio = _MockAudio()
+    text = None
+    finish_reason = "stop"
+    choices = None
+
+
+class _MockDashScopeResponse:
+    status_code = 200
+    request_id = "test-request-id"
+    code = ""
+    message = ""
+    output = _MockOutput()
+    usage = {}
 
 
 @pytest.fixture
@@ -67,8 +92,16 @@ async def test_tts_health(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_tts_synthesize(client: AsyncClient):
     """测试 TTS 合成端点"""
-    resp = await client.post("/ai/tts/synthesize")
+    with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "sk-test-key"}, clear=False):
+        with patch(
+            "dashscope.MultiModalConversation.call",
+            return_value=_MockDashScopeResponse(),
+        ):
+            resp = await client.post(
+                "/ai/tts/synthesize",
+                json={"text": "你好，欢迎使用智能家居系统。"},
+            )
     assert resp.status_code == 200
     data = resp.json()
-    assert data["status"] == "not_implemented"
-    assert data["module"] == "tts"
+    assert data["status"] == "success"
+    assert data["audio_url"] == "https://example.com/audio.wav"
