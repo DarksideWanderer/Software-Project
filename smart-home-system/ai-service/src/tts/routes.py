@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# 阿里云百炼北京地域 URL
+from dotenv import load_dotenv
+load_dotenv()
+
 DASHSCOPE_API_URL = "https://dashscope.aliyuncs.com/api/v1"
 
 
@@ -19,9 +21,6 @@ class SynthesizeRequest(BaseModel):
     """语音合成请求参数"""
     text: str = Field(..., description="需要合成语音的文本")
     voice: str = Field(default="Cherry", description="音色名称")
-    instructions: Optional[str] = Field(default=None, description="指令控制（仅 qwen3-tts-instruct-flash 支持）")
-    optimize_instructions: Optional[bool] = Field(default=None, description="是否优化指令")
-    return_audio_data: bool = Field(default=False, description="为 true 时直接返回音频二进制，否则返回音频 URL")
 
 
 class SynthesizeResponse(BaseModel):
@@ -58,25 +57,14 @@ async def synthesize(req: SynthesizeRequest):
 
     try:
         import dashscope
-
-        # 设置北京地域 API URL
         dashscope.base_http_api_url = DASHSCOPE_API_URL
-
-        kwargs = {
-            "model": "qwen3-tts-flash",
-            "api_key": api_key,
-            "text": req.text,
-            "voice": req.voice,
-        }
-
-        # 如果指定了 instructions，切换到 instruct-flash 模型
-        if req.instructions:
-            kwargs["model"] = "qwen3-tts-instruct-flash"
-            kwargs["instructions"] = req.instructions
-            if req.optimize_instructions is not None:
-                kwargs["optimize_instructions"] = req.optimize_instructions
-
-        response = dashscope.MultiModalConversation.call(**kwargs)
+        text = req.text
+        response = dashscope.audio.qwen_tts.SpeechSynthesizer.call(
+            model="qwen-tts",
+            api_key=api_key,
+            text=text,
+            voice=req.voice,
+        )
 
     except ImportError:
         raise HTTPException(
@@ -105,23 +93,6 @@ async def synthesize(req: SynthesizeRequest):
             detail="语音合成服务返回结果中缺少音频数据",
         )
 
-    # 返回音频二进制模式
-    if req.return_audio_data:
-        try:
-            import httpx
-
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                audio_resp = await client.get(audio_url)
-                audio_resp.raise_for_status()
-                return Response(content=audio_resp.content, media_type="audio/wav")
-        except Exception as e:
-            logger.exception("下载音频文件失败")
-            raise HTTPException(
-                status_code=502,
-                detail=f"下载音频文件失败: {str(e)}",
-            )
-
-    # 默认返回 URL 模式
     return SynthesizeResponse(
         status="success",
         audio_url=audio_url,

@@ -1,7 +1,7 @@
 """TTS 模块单元测试"""
 
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 from httpx import AsyncClient, ASGITransport
@@ -50,7 +50,7 @@ async def test_synthesize_success(client: AsyncClient):
     """测试语音合成成功"""
     with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "sk-test-key"}, clear=False):
         with patch(
-            "dashscope.MultiModalConversation.call",
+            "dashscope.audio.qwen_tts.SpeechSynthesizer.call",
             return_value=MockResponse(),
         ) as mock_call:
             resp = await client.post(
@@ -64,9 +64,8 @@ async def test_synthesize_success(client: AsyncClient):
     assert data["audio_url"] == "https://example.com/audio.wav"
     assert data["request_id"] == "test-request-id"
 
-    # 验证以默认参数调用了 dashscope
     mock_call.assert_called_once_with(
-        model="qwen3-tts-flash",
+        model="qwen-tts",
         api_key="sk-test-key",
         text="你好，欢迎使用智能家居系统。",
         voice="Cherry",
@@ -78,7 +77,7 @@ async def test_synthesize_with_custom_voice(client: AsyncClient):
     """测试自定义音色"""
     with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "sk-test-key"}, clear=False):
         with patch(
-            "dashscope.MultiModalConversation.call",
+            "dashscope.audio.qwen_tts.SpeechSynthesizer.call",
             return_value=MockResponse(),
         ) as mock_call:
             resp = await client.post(
@@ -88,38 +87,10 @@ async def test_synthesize_with_custom_voice(client: AsyncClient):
 
     assert resp.status_code == 200
     mock_call.assert_called_once_with(
-        model="qwen3-tts-flash",
+        model="qwen-tts",
         api_key="sk-test-key",
         text="测试文本",
         voice="Luna",
-    )
-
-
-@pytest.mark.asyncio
-async def test_synthesize_with_instructions(client: AsyncClient):
-    """测试指令控制模式"""
-    with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "sk-test-key"}, clear=False):
-        with patch(
-            "dashscope.MultiModalConversation.call",
-            return_value=MockResponse(),
-        ) as mock_call:
-            resp = await client.post(
-                "/ai/tts/synthesize",
-                json={
-                    "text": "测试文本",
-                    "instructions": "语速较快，带有明显的上扬语调",
-                    "optimize_instructions": True,
-                },
-            )
-
-    assert resp.status_code == 200
-    mock_call.assert_called_once_with(
-        model="qwen3-tts-instruct-flash",
-        api_key="sk-test-key",
-        text="测试文本",
-        voice="Cherry",
-        instructions="语速较快，带有明显的上扬语调",
-        optimize_instructions=True,
     )
 
 
@@ -146,7 +117,7 @@ async def test_synthesize_api_error(client: AsyncClient):
 
     with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "sk-test-key"}, clear=False):
         with patch(
-            "dashscope.MultiModalConversation.call",
+            "dashscope.audio.qwen_tts.SpeechSynthesizer.call",
             return_value=error_response,
         ):
             resp = await client.post(
@@ -163,7 +134,7 @@ async def test_synthesize_exception(client: AsyncClient):
     """测试 dashscope 调用异常"""
     with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "sk-test-key"}, clear=False):
         with patch(
-            "dashscope.MultiModalConversation.call",
+            "dashscope.audio.qwen_tts.SpeechSynthesizer.call",
             side_effect=Exception("网络连接失败"),
         ):
             resp = await client.post(
@@ -183,77 +154,6 @@ async def test_synthesize_missing_text(client: AsyncClient):
         json={},
     )
     assert resp.status_code == 422
-
-
-@pytest.mark.asyncio
-async def test_synthesize_return_audio_data(client: AsyncClient):
-    """测试 return_audio_data=True 返回音频二进制"""
-    mock_audio_content = b"RIFF\x00\x00\x00\x00WAVEfmt "
-
-    class _MockAsyncClient:
-        class _MockResponse:
-            content = mock_audio_content
-
-            def raise_for_status(self):
-                pass
-
-        async def get(self, url):
-            return self._MockResponse()
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *args):
-            pass
-
-    with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "sk-test-key"}, clear=False):
-        with patch(
-            "dashscope.MultiModalConversation.call",
-            return_value=MockResponse(),
-        ):
-            with patch(
-                "httpx.AsyncClient",
-                return_value=_MockAsyncClient(),
-            ):
-                resp = await client.post(
-                    "/ai/tts/synthesize",
-                    json={"text": "测试文本", "return_audio_data": True},
-                )
-
-    assert resp.status_code == 200
-    assert resp.headers["content-type"] == "audio/wav"
-    assert resp.content == mock_audio_content
-
-
-@pytest.mark.asyncio
-async def test_synthesize_return_audio_data_download_failure(client: AsyncClient):
-    """测试 return_audio_data=True 但下载失败"""
-    class _MockFailingClient:
-        async def get(self, url):
-            raise Exception("下载超时")
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *args):
-            pass
-
-    with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "sk-test-key"}, clear=False):
-        with patch(
-            "dashscope.MultiModalConversation.call",
-            return_value=MockResponse(),
-        ):
-            with patch(
-                "httpx.AsyncClient",
-                return_value=_MockFailingClient(),
-            ):
-                resp = await client.post(
-                    "/ai/tts/synthesize",
-                    json={"text": "测试文本", "return_audio_data": True},
-                )
-
-    assert resp.status_code == 502
-    assert "下载超时" in resp.json()["detail"]
 
 
 @pytest.mark.asyncio
@@ -280,7 +180,7 @@ async def test_synthesize_no_audio_url(client: AsyncClient):
 
     with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "sk-test-key"}, clear=False):
         with patch(
-            "dashscope.MultiModalConversation.call",
+            "dashscope.audio.qwen_tts.SpeechSynthesizer.call",
             return_value=_MockResponseNoAudio(),
         ):
             resp = await client.post(

@@ -94,7 +94,7 @@ async def test_tts_synthesize(client: AsyncClient):
     """测试 TTS 合成端点"""
     with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "sk-test-key"}, clear=False):
         with patch(
-            "dashscope.MultiModalConversation.call",
+            "dashscope.audio.qwen_tts.SpeechSynthesizer.call",
             return_value=_MockDashScopeResponse(),
         ):
             resp = await client.post(
