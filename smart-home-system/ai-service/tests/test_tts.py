@@ -1,7 +1,8 @@
 """TTS 模块单元测试"""
 
 import os
-from unittest.mock import patch
+import uuid
+from unittest.mock import patch, MagicMock
 
 import pytest
 from httpx import AsyncClient, ASGITransport
@@ -15,13 +16,30 @@ async def client():
         yield ac
 
 
-@pytest.mark.asyncio
-async def test_tts_health(client: AsyncClient):
-    """测试 TTS 健康检查端点"""
-    resp = await client.get("/ai/tts/health")
-    assert resp.status_code == 200
-    assert resp.json() == {"status": "ok", "module": "tts"}
+# ---------- pyttsx3 Mock 工具 ----------
 
+def _mock_pyttsx3():
+    """Mock pyttsx3 引擎，避免测试环境中依赖实际语音引擎"""
+    mock_engine = MagicMock()
+    mock_engine.save_to_file = MagicMock()
+    mock_engine.runAndWait = MagicMock()
+    return mock_engine
+
+
+@pytest.fixture
+def mock_pyttsx3():
+    with patch("pyttsx3.init", return_value=_mock_pyttsx3()):
+        yield
+
+
+@pytest.fixture
+def mock_pyttsx3_and_audio_dir():
+    """Mock pyttsx3 并确保 audio_dir 存在"""
+    with patch("pyttsx3.init", return_value=_mock_pyttsx3()):
+        yield
+
+
+# ---------- DashScope Mock 类 ----------
 
 class MockAudio:
     url = "https://example.com/audio.wav"
@@ -45,9 +63,19 @@ class MockResponse:
     usage = {}
 
 
+# ---------- 测试用例 ----------
+
+@pytest.mark.asyncio
+async def test_tts_health(client: AsyncClient):
+    """测试 TTS 健康检查端点"""
+    resp = await client.get("/ai/tts/health")
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "ok", "module": "tts"}
+
+
 @pytest.mark.asyncio
 async def test_synthesize_success(client: AsyncClient):
-    """测试语音合成成功"""
+    """测试云端语音合成成功"""
     with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "sk-test-key"}, clear=False):
         with patch(
             "dashscope.audio.qwen_tts.SpeechSynthesizer.call",
@@ -95,21 +123,25 @@ async def test_synthesize_with_custom_voice(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_synthesize_missing_api_key(client: AsyncClient):
-    """测试未配置 API Key 时的错误处理"""
+async def test_synthesize_missing_api_key(client: AsyncClient, mock_pyttsx3):
+    """测试未配置 API Key → 降级到本地 pyttsx3 合成"""
     with patch.dict(os.environ, {}, clear=True):
         resp = await client.post(
             "/ai/tts/synthesize",
             json={"text": "测试文本"},
         )
 
-    assert resp.status_code == 500
-    assert "DASHSCOPE_API_KEY" in resp.json()["detail"]
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "success"
+    # 本地合成返回的是本地音频路径
+    assert data["audio_url"].startswith("/ai/tts/audio/")
+    assert data["request_id"] is None
 
 
 @pytest.mark.asyncio
-async def test_synthesize_api_error(client: AsyncClient):
-    """测试 dashscope API 返回错误"""
+async def test_synthesize_api_error(client: AsyncClient, mock_pyttsx3):
+    """测试 dashscope API 返回错误 → 降级到本地合成"""
     error_response = MockResponse()
     error_response.status_code = 400
     error_response.code = "InvalidParameter"
@@ -125,13 +157,15 @@ async def test_synthesize_api_error(client: AsyncClient):
                 json={"text": "测试文本"},
             )
 
-    assert resp.status_code == 502
-    assert "InvalidParameter" in resp.json()["detail"]
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "success"
+    assert data["audio_url"].startswith("/ai/tts/audio/")
 
 
 @pytest.mark.asyncio
-async def test_synthesize_exception(client: AsyncClient):
-    """测试 dashscope 调用异常"""
+async def test_synthesize_exception(client: AsyncClient, mock_pyttsx3):
+    """测试 dashscope 调用异常 → 降级到本地合成"""
     with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "sk-test-key"}, clear=False):
         with patch(
             "dashscope.audio.qwen_tts.SpeechSynthesizer.call",
@@ -142,8 +176,10 @@ async def test_synthesize_exception(client: AsyncClient):
                 json={"text": "测试文本"},
             )
 
-    assert resp.status_code == 502
-    assert "网络连接失败" in resp.json()["detail"]
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "success"
+    assert data["audio_url"].startswith("/ai/tts/audio/")
 
 
 @pytest.mark.asyncio
@@ -157,8 +193,8 @@ async def test_synthesize_missing_text(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_synthesize_no_audio_url(client: AsyncClient):
-    """测试合成成功但无音频 URL 的情况"""
+async def test_synthesize_no_audio_url(client: AsyncClient, mock_pyttsx3):
+    """测试合成成功但无音频 URL → 降级到本地合成"""
     class _MockAudioNone:
         url = None
         id = None
@@ -188,5 +224,22 @@ async def test_synthesize_no_audio_url(client: AsyncClient):
                 json={"text": "测试文本"},
             )
 
-    assert resp.status_code == 502
-    assert "缺少音频数据" in resp.json()["detail"]
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "success"
+    assert data["audio_url"].startswith("/ai/tts/audio/")
+
+
+@pytest.mark.asyncio
+async def test_synthesize_fallback_all_fail(client: AsyncClient):
+    """测试云端和本地均失败 → 返回 500"""
+    with patch.dict(os.environ, {}, clear=True):
+        # pyttsx3 也失败
+        with patch("pyttsx3.init", side_effect=Exception("pyttsx3 init failed")):
+            resp = await client.post(
+                "/ai/tts/synthesize",
+                json={"text": "测试文本"},
+            )
+
+    assert resp.status_code == 500
+    assert "均不可用" in resp.json()["detail"]
