@@ -5,6 +5,7 @@ import time
 import uuid
 import logging
 import asyncio
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 from concurrent.futures import ThreadPoolExecutor
 
@@ -38,7 +39,7 @@ def _cleanup_expired_audio() -> int:
     count = 0
     for fname in os.listdir(AUDIO_DIR):
         fpath = os.path.join(AUDIO_DIR, fname)
-        if not fname.endswith(".wav") or not os.path.isfile(fpath):
+        if not (fname.endswith(".wav") or fname.endswith(".mp3")) or not os.path.isfile(fpath):
             continue
         try:
             age = now - os.path.getmtime(fpath)
@@ -64,13 +65,27 @@ async def cleanup_audio_background():
 class SynthesizeRequest(BaseModel):
     """语音合成请求参数"""
     text: str = Field(..., description="需要合成语音的文本")
-    voice: str = Field(default="Cherry", description="音色名称")
+    voice: str = Field(default="default", description="音色名称")
+    format: str = Field(default="mp3", description="音频格式，支持 mp3/wav")
+
+
+def _resolve_content_type(fmt: str) -> str:
+    """将请求中的 format 值映射为标准 MIME 类型"""
+    mapping = {
+        "mp3": "audio/mpeg",
+        "wav": "audio/wav",
+        "ogg": "audio/ogg",
+        "webm": "audio/webm",
+    }
+    return mapping.get(fmt, f"audio/{fmt}")
 
 
 class SynthesizeResponse(BaseModel):
     """语音合成响应（URL 模式）"""
     status: str
     audio_url: Optional[str] = None
+    content_type: Optional[str] = None
+    expires_at: Optional[str] = None
     request_id: Optional[str] = None
     message: Optional[str] = None
 
@@ -92,9 +107,9 @@ def _fallback_synthesize(text: str, filename: str) -> str:
     return filepath
 
 
-@router.post("/synthesize")
+@router.post("/speech")
 async def synthesize(req: SynthesizeRequest):
-    """将文本合成为语音
+    """文本转语音合成
 
     优先调用阿里云百炼 Qwen-TTS（DashScope SDK）。
     若云端不可用（如网络异常、无 API Key、服务超时等），
@@ -124,6 +139,7 @@ async def synthesize(req: SynthesizeRequest):
                 return SynthesizeResponse(
                     status="success",
                     audio_url=response.output.audio.url,
+                    content_type=_resolve_content_type(req.format),
                     request_id=response.request_id,
                 )
             else:
@@ -134,15 +150,22 @@ async def synthesize(req: SynthesizeRequest):
 
     # ---------- 降级：本地 pyttsx3 合成 ----------
     try:
+        if req.format != "wav":
+            logger.info("请求格式为 '%s'，本地合成仅支持 wav，将输出 wav 格式", req.format)
         file_id = uuid.uuid4().hex
         filename = f"{file_id}.wav"
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(_tts_executor, _fallback_synthesize, req.text, filename)
-        audio_url = f"/ai/tts/audio/{filename}"
+        audio_url = f"/internal/v1/tts/audio/{filename}"
+        tz_cst = timezone(timedelta(hours=8))
+        expires_at = (datetime.now(tz_cst) + timedelta(seconds=AUDIO_MAX_AGE_SECONDS)).strftime("%Y-%m-%dT%H:%M:%S%z")
+        expires_at = expires_at[:-2] + ":" + expires_at[-2:]  # "YYYY-MM-DDTHH:MM:SS+0800" → "YYYY-MM-DDTHH:MM:SS+08:00"
         logger.info("本地语音合成成功: %s", audio_url)
         return SynthesizeResponse(
             status="success",
             audio_url=audio_url,
+            content_type="audio/wav",
+            expires_at=expires_at,
             request_id=None,
         )
     except Exception as e:

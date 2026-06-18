@@ -27,12 +27,12 @@ app = FastAPI(title="AI Service", version="0.1.0", lifespan=lifespan)
 
 app.include_router(asr_router, prefix="/ai/asr", tags=["ASR"])
 app.include_router(nlu_router, prefix="/ai/nlu", tags=["NLU"])
-app.include_router(tts_router, prefix="/ai/tts", tags=["TTS"])
+app.include_router(tts_router, prefix="/internal/v1/tts", tags=["TTS"])
 
-# 挂载本地 TTS 生成音频文件的静态目录，供客户端下载
+# 挂载本地 TTS 生成音频文件的静态目录，供后端下载
 tts_audio_dir = os.path.join(os.path.dirname(__file__), "tts", "generated_audio")
 os.makedirs(tts_audio_dir, exist_ok=True)
-app.mount("/ai/tts/audio", StaticFiles(directory=tts_audio_dir), name="tts_audio")
+app.mount("/internal/v1/tts/audio", StaticFiles(directory=tts_audio_dir), name="tts_audio")
 
 
 @app.get("/ai/health", tags=["System"])
