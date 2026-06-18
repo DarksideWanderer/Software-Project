@@ -14,4 +14,8 @@ async def health():
 @router.post("/synthesize")
 async def synthesize():
     """语音合成端点（占位，未实现）"""
-    return {"status": "not_implemented", "module": "tts", "message": "语音合成功能尚未实现"}
+    return {
+        "status": "not_implemented",
+        "module": "tts",
+        "message": "语音合成功能尚未实现",
+    }

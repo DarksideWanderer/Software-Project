@@ -1,17 +1,275 @@
-"""ASR 子路由 — 连通性测试桩"""
+"""ASR 子路由 — 语音识别模块
 
-from fastapi import APIRouter
+实现 FRONTEND_API_REQUIREMENTS.md §8.1 定义的 ASR 转写内部接口。
+
+当前版本使用模拟引擎（mock），在部署时可替换为 Whisper / FunASR 等真实引擎。
+"""
+
+import time
+import uuid
+from typing import Optional, Union
+
+from fastapi import APIRouter, File, Form, Request, UploadFile, status
+from fastapi.responses import JSONResponse
+
+# ── 常量 ────────────────────────────────────────────────────────────────
+MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
+MAX_DURATION_SECONDS = 30
+# 仅严格匹配列表中列出的 MIME 类型；不允许通过 audio/* 通配
+SUPPORTED_MIME_TYPES = frozenset(
+    {
+        "audio/webm",
+        "audio/webm;codecs=opus",
+        "audio/ogg",
+        "audio/ogg;codecs=opus",
+        "audio/wav",
+        "audio/wave",
+        "audio/x-wav",
+    }
+)
+
+# ── 模拟转写结果（Mock 引擎用）──────────────────────────────────────────
+_MOCK_TRANSCRIPTS = [
+    "打开客厅灯",
+    "把空调调到 26 度",
+    "关闭电视",
+    "把卧室氛围灯调到百分之五十",
+    "打开所有灯",
+    "设置观影模式",
+    "风扇调到三档",
+    "冰箱温度调到零下十八度",
+    "客厅灯亮度调到百分之八十",
+    "开启睡眠模式",
+]
 
 router = APIRouter()
 
 
+# ── 错误响应构建器 ───────────────────────────────────────────────────────
+
+
+def _error_response(
+    status_code: int,
+    code: str,
+    message: str,
+    details: Optional[dict] = None,
+    request_id: Optional[str] = None,
+) -> JSONResponse:
+    """构建符合 FRONTEND_API_REQUIREMENTS.md §3.3 统一错误格式的响应。
+
+    错误体包含 request_id，便于跨服务排查（§12.7）。
+    """
+    error_body: dict = {
+        "error": {
+            "code": code,
+            "message": message,
+        }
+    }
+    if details:
+        error_body["error"]["details"] = details
+    if request_id:
+        error_body["error"]["request_id"] = request_id
+    return JSONResponse(status_code=status_code, content=error_body)
+
+
+# ── 辅助函数 ─────────────────────────────────────────────────────────────
+
+
+def _validate_and_read_audio(
+    upload: UploadFile, request_id: Optional[str] = None
+) -> Union[bytes, JSONResponse]:
+    """校验上传音频文件的 MIME 类型、大小与时长，读取全部字节。
+
+    Returns:
+        音频文件的原始字节；校验失败时返回 JSONResponse 错误体。
+
+    Error responses:
+        415: 不支持的音频格式。
+        413: 文件超过 10 MB。
+        422: 文件为空 / 无可检测语音 / 音频过长。
+    """
+    # 1. 校验 MIME 类型 —— 仅允许白名单中的类型
+    content_type = upload.content_type or ""
+    if content_type not in SUPPORTED_MIME_TYPES:
+        return _error_response(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            code="UNSUPPORTED_AUDIO_FORMAT",
+            message=f"不支持的音频格式: {content_type}",
+            details={"supported_formats": sorted(SUPPORTED_MIME_TYPES)},
+            request_id=request_id,
+        )
+
+    # 2. 读取全部字节
+    data = upload.file.read()
+
+    # 3. 校验文件大小（§7.2: 最大 10 MB）
+    if len(data) > MAX_FILE_SIZE_BYTES:
+        return _error_response(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            code="AUDIO_TOO_LARGE",
+            message=f"音频文件过大，最大允许 {MAX_FILE_SIZE_BYTES // (1024 * 1024)} MB",
+            details={
+                "max_size_bytes": MAX_FILE_SIZE_BYTES,
+                "actual_size_bytes": len(data),
+            },
+            request_id=request_id,
+        )
+
+    # 4. 极小文件视为无有效语音（§7.2: SPEECH_NOT_DETECTED）
+    if len(data) < 100:
+        return _error_response(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="SPEECH_NOT_DETECTED",
+            message="未检测到有效语音内容",
+            details={"file_size_bytes": len(data)},
+            request_id=request_id,
+        )
+
+    # 5. 校验音频时长（§7.2: 最大 30 秒）
+    # 使用原始字节数估算，不受 _estimate_duration_ms 的上限裁剪影响
+    raw_seconds = len(data) / 32000.0
+    if raw_seconds > MAX_DURATION_SECONDS:
+        return _error_response(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="AUDIO_TOO_LONG",
+            message=f"音频时长过长，最大允许 {MAX_DURATION_SECONDS} 秒",
+            details={
+                "max_duration_seconds": MAX_DURATION_SECONDS,
+                "estimated_duration_seconds": round(raw_seconds, 1),
+            },
+            request_id=request_id,
+        )
+
+    return data
+
+
+def _estimate_duration_ms(audio_bytes: bytes) -> int:
+    """根据音频字节数估算时长（毫秒），用于 Mock 模式。
+
+    假设 PCM 16-bit 单声道 16kHz，1 秒 ≈ 32000 字节。
+    WAV / WebM 包含容器开销，此处为粗略估算。
+    """
+    raw_seconds = len(audio_bytes) / 32000.0
+    return max(100, min(int(raw_seconds * 1000), MAX_DURATION_SECONDS * 1000))
+
+
+def _mock_transcribe(audio_bytes: bytes) -> dict:
+    """Mock ASR 引擎：返回模拟转写结果。
+
+    在真实部署时，替换为 Whisper / FunASR 调用。
+    """
+    # 使用音频字节的哈希值选择稳定的模拟结果
+    seed = sum(
+        audio_bytes[i]
+        for i in range(0, len(audio_bytes), max(1, len(audio_bytes) // 64))
+    )
+    idx = seed % len(_MOCK_TRANSCRIPTS)
+    text = _MOCK_TRANSCRIPTS[idx]
+
+    duration_ms = _estimate_duration_ms(audio_bytes)
+    confidence = round(0.85 + (seed % 15) / 100.0, 2)
+
+    return {
+        "text": text,
+        "language": "zh-CN",
+        "confidence": confidence,
+        "duration_ms": duration_ms,
+    }
+
+
+# ── 路由端点 ─────────────────────────────────────────────────────────────
+
+
 @router.get("/health")
 async def health():
-    """ASR 模块健康检查"""
+    """ASR 模块健康检查。
+
+    Returns:
+        dict: 包含 status 与 module 字段。
+    """
     return {"status": "ok", "module": "asr"}
 
 
-@router.post("/transcribe")
-async def transcribe():
-    """语音识别端点（占位，未实现）"""
-    return {"status": "not_implemented", "module": "asr", "message": "语音识别功能尚未实现"}
+@router.post(
+    "/transcriptions",
+    status_code=status.HTTP_200_OK,
+    summary="ASR 语音转写",
+    description=(
+        "上传音频文件，返回转写文本、语言、置信度和时长。"
+        "符合 FRONTEND_API_REQUIREMENTS.md §8.1。"
+    ),
+    responses={
+        200: {"description": "转写成功"},
+        400: {"description": "请求格式错误"},
+        413: {"description": "音频文件过大"},
+        415: {"description": "不支持的音频格式"},
+        422: {"description": "未检测到有效语音"},
+    },
+)
+async def transcribe_audio(
+    request: Request,
+    audio: UploadFile = File(..., description="浏览器录制的音频文件"),
+    language: Optional[str] = Form(default="zh-CN", description="音频语言，默认 zh-CN"),
+    request_id: Optional[str] = Form(default=None, description="请求追踪 ID"),
+):
+    """语音识别主端点。
+
+    接受 multipart/form-data 格式的音频文件，调用 ASR 引擎进行转写。
+
+    Args:
+        request: FastAPI Request 对象。
+        audio: 上传的音频文件（必需）。
+        language: 音频语言标识（可选，默认 zh-CN）。
+        request_id: 请求追踪 ID（可选，未提供时自动生成）。
+
+    Returns:
+        dict: 包含 text, language, confidence, duration_ms 和 request_id；
+              校验失败时返回 JSONResponse 错误体。
+    """
+    if request_id is None:
+        request_id = str(uuid.uuid4())
+
+    # 校验并读取音频；可能提前返回错误响应（含 request_id）
+    audio_bytes_or_error = _validate_and_read_audio(audio, request_id=request_id)
+    if isinstance(audio_bytes_or_error, JSONResponse):
+        return audio_bytes_or_error
+
+    # 调用 ASR 引擎（当前为 Mock）
+    start = time.perf_counter()
+    result = _mock_transcribe(audio_bytes_or_error)
+    elapsed_ms = int((time.perf_counter() - start) * 1000)
+
+    return {
+        **result,
+        "request_id": request_id,
+        "engine": "mock",
+        "processing_ms": elapsed_ms,
+    }
+
+
+# ── 兼容旧端点（后续可废弃）──────────────────────────────────────────────
+
+
+@router.post(
+    "/transcribe",
+    status_code=status.HTTP_200_OK,
+    summary="[已废弃] 语音识别端点",
+    description="兼容旧版端点，请使用 /transcriptions。",
+    deprecated=True,
+)
+async def transcribe_legacy(
+    audio: UploadFile = File(..., description="浏览器录制的音频文件"),
+):
+    """旧版转写端点，转发到新端点。"""
+    rid = str(uuid.uuid4())
+    audio_bytes_or_error = _validate_and_read_audio(audio, request_id=rid)
+    if isinstance(audio_bytes_or_error, JSONResponse):
+        return audio_bytes_or_error
+
+    result = _mock_transcribe(audio_bytes_or_error)
+    return {
+        **result,
+        "request_id": rid,
+        "engine": "mock",
+        "deprecated": True,
+    }

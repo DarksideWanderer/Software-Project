@@ -30,12 +30,28 @@ async def test_asr_health(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_asr_transcribe(client: AsyncClient):
-    """测试 ASR 转写端点"""
+    """测试 ASR 转写端点 — 缺少音频应返回 422"""
     resp = await client.post("/ai/asr/transcribe")
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_asr_transcriptions(client: AsyncClient):
+    """测试 ASR 新转写端点 — 缺少音频应返回 422"""
+    resp = await client.post("/ai/asr/transcriptions")
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_internal_health(client: AsyncClient):
+    """测试 AI 服务内部健康检查 — FRONTEND_API_REQUIREMENTS.md §11.2"""
+    resp = await client.get("/internal/health")
     assert resp.status_code == 200
-    data = resp.json()
-    assert data["status"] == "not_implemented"
-    assert data["module"] == "asr"
+    body = resp.json()
+    assert body["status"] == "ok"
+    assert body["models"]["asr"] == "ready"
+    assert body["models"]["nlu"] == "ready"
+    assert body["models"]["tts"] == "not_loaded"
 
 
 @pytest.mark.asyncio

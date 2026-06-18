@@ -14,4 +14,8 @@ async def health():
 @router.post("/parse")
 async def parse():
     """意图解析端点（占位，未实现）"""
-    return {"status": "not_implemented", "module": "nlu", "message": "自然语言理解功能尚未实现"}
+    return {
+        "status": "not_implemented",
+        "module": "nlu",
+        "message": "自然语言理解功能尚未实现",
+    }
