@@ -1,13 +1,29 @@
 """AI 服务层 FastAPI 主应用 — 连通性测试"""
 
 import os
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from src.asr import router as asr_router
 from src.nlu import router as nlu_router
 from src.tts import router as tts_router
+from src.tts.routes import cleanup_audio_background, _cleanup_expired_audio
 
-app = FastAPI(title="AI Service", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期：启动时清理过期音频 + 后台定期清理"""
+    # startup
+    _cleanup_expired_audio()
+    task = asyncio.create_task(cleanup_audio_background())
+    yield
+    # shutdown
+    task.cancel()
+
+
+app = FastAPI(title="AI Service", version="0.1.0", lifespan=lifespan)
 
 app.include_router(asr_router, prefix="/ai/asr", tags=["ASR"])
 app.include_router(nlu_router, prefix="/ai/nlu", tags=["NLU"])

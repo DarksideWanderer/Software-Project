@@ -1,8 +1,9 @@
 """TTS 模块单元测试"""
 
 import os
+import time
 import uuid
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
 
 import pytest
 from httpx import AsyncClient, ASGITransport
@@ -243,3 +244,50 @@ async def test_synthesize_fallback_all_fail(client: AsyncClient):
 
     assert resp.status_code == 500
     assert "均不可用" in resp.json()["detail"]
+
+
+# ---------- 过期音频清理测试 ----------
+
+def test_cleanup_expired_audio(tmp_path, monkeypatch):
+    """测试 _cleanup_expired_audio 删除过期文件"""
+    from src.tts.routes import _cleanup_expired_audio, AUDIO_DIR as _REAL_DIR
+
+    # 改用临时目录
+    monkeypatch.setattr("src.tts.routes.AUDIO_DIR", str(tmp_path))
+
+    # 创建两个文件：一个过期，一个未过期
+    old_file = tmp_path / "old.wav"
+    old_file.write_text("dummy")
+    now = time.time()
+    os.utime(old_file, (now - 2000, now - 2000))  # 约 33 分钟前 → 过期
+
+    fresh_file = tmp_path / "fresh.wav"
+    fresh_file.write_text("dummy")
+    os.utime(fresh_file, (now - 60, now - 60))  # 1 分钟前 → 未过期
+
+    non_wav = tmp_path / "not_audio.txt"
+    non_wav.write_text("should be ignored")
+
+    count = _cleanup_expired_audio()
+    assert count == 1  # 只删除了 old.wav
+    assert not old_file.exists()  # 已删除
+    assert fresh_file.exists()   # 保留
+    assert non_wav.exists()      # 保留
+
+
+def test_cleanup_expired_audio_empty_dir(tmp_path, monkeypatch):
+    """测试空目录清理"""
+    from src.tts.routes import _cleanup_expired_audio
+
+    monkeypatch.setattr("src.tts.routes.AUDIO_DIR", str(tmp_path))
+    count = _cleanup_expired_audio()
+    assert count == 0
+
+
+def test_cleanup_expired_audio_no_dir(monkeypatch):
+    """测试目录不存在时静默处理"""
+    from src.tts.routes import _cleanup_expired_audio
+
+    monkeypatch.setattr("src.tts.routes.AUDIO_DIR", "/nonexistent/path")
+    count = _cleanup_expired_audio()
+    assert count == 0

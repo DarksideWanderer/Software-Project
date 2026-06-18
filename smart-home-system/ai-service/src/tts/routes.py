@@ -1,6 +1,7 @@
 """TTS 子路由 — 文本转语音合成"""
 
 import os
+import time
 import uuid
 import logging
 import asyncio
@@ -23,6 +24,41 @@ DASHSCOPE_API_URL = "https://dashscope.aliyuncs.com/api/v1"
 AUDIO_DIR = os.path.join(os.path.dirname(__file__), "generated_audio")
 os.makedirs(AUDIO_DIR, exist_ok=True)
 _tts_executor = ThreadPoolExecutor(max_workers=1)
+
+# ---------- 过期音频清理 ----------
+AUDIO_MAX_AGE_SECONDS: int = 1800  # 30 分钟
+AUDIO_CLEANUP_INTERVAL_SECONDS: int = 600  # 每 10 分钟清理一次
+
+
+def _cleanup_expired_audio() -> int:
+    """删除超过 AUDIO_MAX_AGE_SECONDS 的音频文件，返回删除数量"""
+    if not os.path.isdir(AUDIO_DIR):
+        return 0
+    now = time.time()
+    count = 0
+    for fname in os.listdir(AUDIO_DIR):
+        fpath = os.path.join(AUDIO_DIR, fname)
+        if not fname.endswith(".wav") or not os.path.isfile(fpath):
+            continue
+        try:
+            age = now - os.path.getmtime(fpath)
+            if age > AUDIO_MAX_AGE_SECONDS:
+                os.remove(fpath)
+                count += 1
+                logger.debug("已删除过期音频: %s (age=%.1fs)", fname, age)
+        except OSError:
+            logger.warning("无法删除音频文件: %s", fname)
+    if count:
+        logger.info("过期音频清理完成，共删除 %d 个文件", count)
+    return count
+
+
+async def cleanup_audio_background():
+    """后台协程：定期清理过期音频"""
+    while True:
+        await asyncio.sleep(AUDIO_CLEANUP_INTERVAL_SECONDS)
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, _cleanup_expired_audio)
 
 
 class SynthesizeRequest(BaseModel):
