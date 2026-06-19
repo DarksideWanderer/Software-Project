@@ -68,8 +68,8 @@ async def test_nlu_parse(client: AsyncClient):
     resp = await client.post("/ai/nlu/parse")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["status"] == "not_implemented"
-    assert data["module"] == "nlu"
+    assert data["understood"] is False
+    assert data["actions"] == []
 
 
 @pytest.mark.asyncio
