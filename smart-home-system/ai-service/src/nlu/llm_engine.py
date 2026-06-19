@@ -66,19 +66,19 @@ _SYSTEM_PROMPT = """你是一个智能家居语音助手。用户会用中文说
 3. params 的值必须符合该命令参数的类型和范围。
 4. 如果用户说的是场景（如"观影模式"），使用 scene 类型的 action。
 5. 如果无法确定用户意图，设置 understood=false 并让用户补充信息。
-6. 不要在 reply 中说"根据你的要求"之类的套话，直接说执行结果。
+6. 不要在 reply 中声称设备已经成功执行，只能描述"已生成计划"或"准备执行"。
 7. 多设备指令可以包含多个 actions。
 8. 参数中的数字直接使用 JSON number，不要用字符串。
 
 ## 示例
 用户："打开客厅灯"
 ```json
-{{"understood":true,"reply":"已打开客厅主灯。","actions":[{{"kind":"device_command","device_id":"light-living-001","command":"turn_on","params":{{}}}}]}}
+{{"understood":true,"reply":"已生成打开客厅主灯的计划。","actions":[{{"kind":"device_command","device_id":"light-living-001","command":"turn_on","params":{{}}}}]}}
 ```
 
 用户："把空调调到22度"
 ```json
-{{"understood":true,"reply":"客厅空调已调到22°C。","actions":[{{"kind":"device_command","device_id":"ac-living-001","command":"set_temperature","params":{{"temperature":22}}}}]}}
+{{"understood":true,"reply":"已生成将客厅空调调整到22°C的计划。","actions":[{{"kind":"device_command","device_id":"ac-living-001","command":"set_temperature","params":{{"temperature":22}}}}]}}
 ```
 
 用户："弄一下那个东西"

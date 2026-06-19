@@ -1,11 +1,11 @@
 """NLU 子路由 — LLM + 规则版意图解析模块。
 
 本模块实现 FRONTEND_API_REQUIREMENTS.md §8.2 定义的内部 NLU 接口。
-采用双引擎降级策略：
-1. 云端引擎 — DeepSeek API（通过 OpenAI 兼容接口）
-2. 本地降级 — 规则版 mock 引擎
+采用双引擎策略：
+1. 本地规则引擎优先，稳定处理常见课程演示指令
+2. 云端 LLM 引擎兜底，处理规则无法理解的自然表达
 
-支持的规则（降级时生效）：
+支持的规则（优先匹配）：
 - 单设备控制：打开/关闭 + 设备名
 - 参数调节：设备名 + 参数值（温度、亮度、百分比等）
 - 多动作：逗号/并/和 连接
@@ -416,16 +416,22 @@ def _scenes_to_dicts(scenes: list[SceneInfo]) -> list[dict]:
 async def health():
     """NLU 模块健康检查。"""
     engine = "llm" if llm_engine.llm_available() else "rule"
-    return {"status": "ok", "module": "nlu", "engine": engine}
+    return {
+        "status": "ok",
+        "module": "nlu",
+        "engine": engine,
+        "strategy": "rule_first_llm_fallback",
+    }
 
 
 @router.post("/interpret", response_model=InterpretResponse)
 async def interpret(request: InterpretRequest = Body(...)):
     """意图解析主端点 — FRONTEND_API_REQUIREMENTS.md §8.2。
 
-    双引擎降级策略：
-    1. 优先使用 DeepSeek LLM 进行意图理解
-    2. LLM 不可用或解析失败时，降级到本地规则引擎
+    双引擎策略：
+    1. 优先使用本地规则引擎，稳定处理常见智能家居指令。
+    2. 规则无法理解时，再使用 DeepSeek LLM 兜底。
+    3. LLM 不可用或解析失败时，返回规则引擎的失败结果。
 
     约束：
     1. 只能使用请求上下文中存在的设备 ID。
@@ -433,12 +439,21 @@ async def interpret(request: InterpretRequest = Body(...)):
     3. 参数必须符合声明的类型。
     4. 无法判断目标时返回 understood=false。
     """
-    devices_dict = _devices_to_dicts(request.devices)
-    scenes_dict = _scenes_to_dicts(request.scenes)
-    conversation_dict = [{"role": m.role, "content": m.content} for m in request.conversation] if request.conversation else []
+    # 1. 规则引擎优先：命中后直接返回，避免常见指令依赖外部网络和额度。
+    rule_result = _interpret(
+        text=request.text,
+        devices=request.devices,
+        scenes=request.scenes,
+    )
+    if rule_result.get("understood") and rule_result.get("actions"):
+        logger.info("NLU 使用规则引擎，understood=True")
+        return InterpretResponse(**rule_result)
 
-    # 1. 尝试 LLM 引擎
+    # 2. 规则无法理解时，尝试 LLM 兜底。
     if llm_engine.llm_available():
+        devices_dict = _devices_to_dicts(request.devices)
+        scenes_dict = _scenes_to_dicts(request.scenes)
+        conversation_dict = [{"role": m.role, "content": m.content} for m in request.conversation] if request.conversation else []
         result = llm_engine.llm_interpret(
             text=request.text,
             devices=devices_dict,
@@ -448,16 +463,11 @@ async def interpret(request: InterpretRequest = Body(...)):
         if result is not None:
             logger.info("NLU 使用 LLM 引擎，understood=%s", result["understood"])
             return InterpretResponse(**result)
-        logger.info("LLM 引擎失败，降级到规则引擎")
+        logger.info("LLM 引擎失败，返回规则引擎结果")
 
-    # 2. 降级到规则引擎
-    logger.info("NLU 使用规则引擎")
-    result = _interpret(
-        text=request.text,
-        devices=request.devices,
-        scenes=request.scenes,
-    )
-    return InterpretResponse(**result)
+    # 3. LLM 不可用或失败：保留规则引擎的失败结果。
+    logger.info("NLU 使用规则引擎，understood=False")
+    return InterpretResponse(**rule_result)
 
 
 @router.post("/parse")
