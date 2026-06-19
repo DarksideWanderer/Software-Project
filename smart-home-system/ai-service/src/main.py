@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from src.asr import router as asr_router
 from src.nlu import router as nlu_router
 from src.tts import router as tts_router
-from src.tts.routes import cleanup_audio_background, _cleanup_expired_audio
+from src.tts.routes import cleanup_audio_background, _cleanup_expired_audio, SynthesizeRequest
 
 
 @asynccontextmanager
@@ -44,6 +44,33 @@ tts_audio_dir = os.path.join(os.path.dirname(__file__), "tts", "generated_audio"
 os.makedirs(tts_audio_dir, exist_ok=True)
 app.mount("/internal/v1/tts/audio", StaticFiles(directory=tts_audio_dir), name="tts_audio_internal")
 app.mount("/ai/tts/audio", StaticFiles(directory=tts_audio_dir), name="tts_audio_legacy")
+
+
+# ── TTS 旧版 /synthesize 别名（兼容测试与旧版调用方）────────────────────
+# tts/routes.py 只定义了 /speech 端点，此处补充 /synthesize 别名
+
+from src.tts.routes import synthesize as _tts_synthesize_handler
+
+
+@app.post("/ai/tts/synthesize", tags=["TTS"])
+async def tts_synthesize_legacy(req: SynthesizeRequest):
+    """TTS 合成（旧版 /synthesize 端点，转发到 /speech）。"""
+    from fastapi.responses import JSONResponse
+    import json as _json
+
+    resp = await _tts_synthesize_handler(req)
+    # 将 local audio URL 的 prefix 从 /internal/v1/tts/audio/ 映射到 /ai/tts/audio/
+    audio_url = getattr(resp, "audio_url", None)
+    if audio_url and audio_url.startswith("/internal/v1/tts/audio/"):
+        filename = audio_url.rsplit("/", 1)[-1]
+        resp.audio_url = f"/ai/tts/audio/{filename}"
+    return resp
+
+
+@app.post("/internal/v1/tts/synthesize", tags=["TTS"])
+async def tts_synthesize_internal_legacy(req: SynthesizeRequest):
+    """TTS 合成（内部旧版 /synthesize 端点，转发到 /speech）。"""
+    return await _tts_synthesize_handler(req)
 
 
 # ── 健康检查 ────────────────────────────────────────────────────────────

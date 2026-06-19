@@ -107,7 +107,7 @@ async def test_synthesize_success(client: AsyncClient):
         model="qwen-tts",
         api_key="sk-test-key",
         text="你好，欢迎使用智能家居系统。",
-        voice="Cherry",
+        voice="default",
     )
 
 
