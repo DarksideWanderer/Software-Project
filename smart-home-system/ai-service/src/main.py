@@ -8,6 +8,7 @@ from src.tts import router as tts_router
 app = FastAPI(title="AI Service", version="0.1.0")
 
 app.include_router(asr_router, prefix="/ai/asr", tags=["ASR"])
+app.include_router(nlu_router, prefix="/internal/v1/nlu", tags=["NLU"])
 app.include_router(nlu_router, prefix="/ai/nlu", tags=["NLU"])
 app.include_router(tts_router, prefix="/ai/tts", tags=["TTS"])
 
