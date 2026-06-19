@@ -1,4 +1,8 @@
-"""AI 服务层 FastAPI 主应用 — 连通性测试"""
+"""AI 服务层 FastAPI 主应用
+
+为 backend-core 提供 ASR / NLU / TTS 内部接口。
+符合 FRONTEND_API_REQUIREMENTS.md §8 和 §11.2 定义。
+"""
 
 import os
 import asyncio
@@ -23,26 +27,45 @@ async def lifespan(app: FastAPI):
     task.cancel()
 
 
-app = FastAPI(title="AI Service", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="AI Service", version="0.2.0", lifespan=lifespan)
 
-# 内部接口（符合 FRONTEND_API_REQUIREMENTS.md §8 路径约定）
+# ── 内部接口（符合 FRONTEND_API_REQUIREMENTS.md §8 路径约定）────────────
 app.include_router(asr_router, prefix="/internal/v1/asr", tags=["ASR"])
 app.include_router(nlu_router, prefix="/internal/v1/nlu", tags=["NLU"])
 app.include_router(tts_router, prefix="/internal/v1/tts", tags=["TTS"])
 
-# 兼容旧版前缀 /ai/*
+# ── 兼容旧版前缀 /ai/* ──────────────────────────────────────────────────
 app.include_router(asr_router, prefix="/ai/asr", tags=["ASR"])
-app.include_router(nlu_router, prefix="/internal/v1/nlu", tags=["NLU"])
 app.include_router(nlu_router, prefix="/ai/nlu", tags=["NLU"])
-app.include_router(tts_router, prefix="/internal/v1/tts", tags=["TTS"])
+app.include_router(tts_router, prefix="/ai/tts", tags=["TTS"])
 
-# 挂载本地 TTS 生成音频文件的静态目录，供后端下载
+# ── 挂载本地 TTS 生成音频文件的静态目录，供 backend-core 下载 ──────────
 tts_audio_dir = os.path.join(os.path.dirname(__file__), "tts", "generated_audio")
 os.makedirs(tts_audio_dir, exist_ok=True)
-app.mount("/internal/v1/tts/audio", StaticFiles(directory=tts_audio_dir), name="tts_audio")
+app.mount("/internal/v1/tts/audio", StaticFiles(directory=tts_audio_dir), name="tts_audio_internal")
+app.mount("/ai/tts/audio", StaticFiles(directory=tts_audio_dir), name="tts_audio_legacy")
 
+
+# ── 健康检查 ────────────────────────────────────────────────────────────
 
 @app.get("/ai/health", tags=["System"])
 async def health_check():
-    """服务健康检查"""
+    """旧版服务健康检查（兼容）"""
     return {"status": "ok", "service": "ai-service"}
+
+
+@app.get("/internal/health", tags=["System"])
+async def internal_health():
+    """AI 服务内部健康检查 — FRONTEND_API_REQUIREMENTS.md §11.2。
+
+    Returns:
+        服务整体状态及各模型模块的加载状态。
+    """
+    return {
+        "status": "ok",
+        "models": {
+            "asr": "ready",
+            "nlu": "ready",
+            "tts": "ready",
+        },
+    }

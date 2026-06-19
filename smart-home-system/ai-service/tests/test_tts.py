@@ -20,9 +20,19 @@ async def client():
 # ---------- pyttsx3 Mock 工具 ----------
 
 def _mock_pyttsx3():
-    """Mock pyttsx3 引擎，避免测试环境中依赖实际语音引擎"""
+    """Mock pyttsx3 引擎，避免测试环境中依赖实际语音引擎。"""
     mock_engine = MagicMock()
-    mock_engine.save_to_file = MagicMock()
+
+    def fake_save_to_file(text, filepath):
+        """模拟 save_to_file：写入一个最小 WAV 文件头。"""
+        os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
+        # 写入一个最小的有效 WAV 文件（44 字节头 + 少量数据）
+        with open(filepath, "wb") as f:
+            f.write(b"RIFF\x28\x00\x00\x00WAVEfmt \x10\x00\x00\x00"
+                    b"\x01\x00\x01\x00\x80\x3e\x00\x00\x00\x7d\x00\x00"
+                    b"\x02\x00\x10\x00data\x04\x00\x00\x00\x00\x00\x00\x00")
+
+    mock_engine.save_to_file = fake_save_to_file
     mock_engine.runAndWait = MagicMock()
     return mock_engine
 

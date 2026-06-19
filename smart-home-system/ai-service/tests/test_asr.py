@@ -16,9 +16,13 @@
 - Mock 引擎确定性验证
 
 测试使用 httpx.AsyncClient + ASGITransport，无需启动真实服务器。
+
+测试固定使用 Mock 引擎（ASR_FORCE_MOCK=true），避免依赖外部讯飞 API。
 """
 
 import io
+import os
+os.environ["ASR_FORCE_MOCK"] = "true"
 
 import pytest
 from httpx import ASGITransport, AsyncClient

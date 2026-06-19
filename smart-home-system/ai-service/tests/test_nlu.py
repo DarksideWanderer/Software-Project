@@ -72,7 +72,10 @@ async def test_nlu_health(client: AsyncClient):
     resp = await client.get("/ai/nlu/health")
 
     assert resp.status_code == 200
-    assert resp.json() == {"status": "ok", "module": "nlu"}
+    data = resp.json()
+    assert data["status"] == "ok"
+    assert data["module"] == "nlu"
+    assert "engine" in data  # LLM 或 rule
 
 
 @pytest.mark.asyncio

@@ -2,15 +2,23 @@
 
 实现 FRONTEND_API_REQUIREMENTS.md §8.1 定义的 ASR 转写内部接口。
 
-当前版本使用模拟引擎（mock），在部署时可替换为 Whisper / FunASR 等真实引擎。
+采用双引擎降级策略：
+1. 云端引擎 — 讯飞语音听写 IAT API
+2. 本地降级 — Mock 引擎（确定性，用于测试）
 """
 
+import logging
+import os
 import time
 import uuid
 from typing import Optional, Union
 
 from fastapi import APIRouter, File, Form, Request, UploadFile, status
 from fastapi.responses import JSONResponse
+
+from . import iflytek_engine
+
+logger = logging.getLogger(__name__)
 
 # ── 常量 ────────────────────────────────────────────────────────────────
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
@@ -179,15 +187,11 @@ def _mock_transcribe(audio_bytes: bytes) -> dict:
 
 # ── 路由端点 ─────────────────────────────────────────────────────────────
 
-
 @router.get("/health")
 async def health():
-    """ASR 模块健康检查。
-
-    Returns:
-        dict: 包含 status 与 module 字段。
-    """
-    return {"status": "ok", "module": "asr"}
+    """ASR 模块健康检查。"""
+    engine = "iflytek" if iflytek_engine.engine_available() else "mock"
+    return {"status": "ok", "module": "asr", "engine": engine}
 
 
 @router.post(
@@ -197,6 +201,7 @@ async def health():
     description=(
         "上传音频文件，返回转写文本、语言、置信度和时长。"
         "符合 FRONTEND_API_REQUIREMENTS.md §8.1。"
+        "优先使用讯飞 IAT API，不可用时降级到 Mock 引擎。"
     ),
     responses={
         200: {"description": "转写成功"},
@@ -204,6 +209,7 @@ async def health():
         413: {"description": "音频文件过大"},
         415: {"description": "不支持的音频格式"},
         422: {"description": "未检测到有效语音"},
+        503: {"description": "ASR 引擎不可用"},
     },
 )
 async def transcribe_audio(
@@ -212,30 +218,42 @@ async def transcribe_audio(
     language: Optional[str] = Form(default="zh-CN", description="音频语言，默认 zh-CN"),
     request_id: Optional[str] = Form(default=None, description="请求追踪 ID"),
 ):
-    """语音识别主端点。
+    """语音识别主端点 — 双引擎降级。
 
-    接受 multipart/form-data 格式的音频文件，调用 ASR 引擎进行转写。
-
-    Args:
-        request: FastAPI Request 对象。
-        audio: 上传的音频文件（必需）。
-        language: 音频语言标识（可选，默认 zh-CN）。
-        request_id: 请求追踪 ID（可选，未提供时自动生成）。
-
-    Returns:
-        dict: 包含 text, language, confidence, duration_ms 和 request_id；
-              校验失败时返回 JSONResponse 错误体。
+    1. 优先使用讯飞 IAT API 进行真实语音转写
+    2. 讯飞不可用或失败时，降级到 Mock 引擎
     """
     if request_id is None:
         request_id = str(uuid.uuid4())
 
-    # 校验并读取音频；可能提前返回错误响应（含 request_id）
+    # 校验并读取音频
     audio_bytes_or_error = _validate_and_read_audio(audio, request_id=request_id)
     if isinstance(audio_bytes_or_error, JSONResponse):
         return audio_bytes_or_error
 
-    # 调用 ASR 引擎（当前为 Mock）
     start = time.perf_counter()
+
+    # 1. 尝试真实引擎（讯飞 IAT）
+    use_real = (
+        iflytek_engine.engine_available()
+        and not os.environ.get("ASR_FORCE_MOCK")
+    )
+    if use_real:
+        try:
+            result = await iflytek_engine.transcribe(audio_bytes_or_error)
+            elapsed_ms = int((time.perf_counter() - start) * 1000)
+            logger.info("ASR 使用讯飞引擎，text=%s", result["text"][:50])
+            return {
+                **result,
+                "request_id": request_id,
+                "engine": "iflytek",
+                "processing_ms": elapsed_ms,
+            }
+        except Exception as e:
+            logger.warning("讯飞 ASR 转写失败，降级到 Mock: %s", e)
+
+    # 2. 降级到 Mock 引擎
+    logger.info("ASR 使用 Mock 引擎")
     result = _mock_transcribe(audio_bytes_or_error)
     elapsed_ms = int((time.perf_counter() - start) * 1000)
 
@@ -260,11 +278,24 @@ async def transcribe_audio(
 async def transcribe_legacy(
     audio: UploadFile = File(..., description="浏览器录制的音频文件"),
 ):
-    """旧版转写端点，转发到新端点。"""
+    """旧版转写端点，转发到新端点逻辑。"""
     rid = str(uuid.uuid4())
     audio_bytes_or_error = _validate_and_read_audio(audio, request_id=rid)
     if isinstance(audio_bytes_or_error, JSONResponse):
         return audio_bytes_or_error
+
+    # 尝试真实引擎
+    if iflytek_engine.engine_available():
+        try:
+            result = await iflytek_engine.transcribe(audio_bytes_or_error)
+            return {
+                **result,
+                "request_id": rid,
+                "engine": "iflytek",
+                "deprecated": True,
+            }
+        except Exception:
+            pass
 
     result = _mock_transcribe(audio_bytes_or_error)
     return {

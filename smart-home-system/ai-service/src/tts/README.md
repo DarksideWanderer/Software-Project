@@ -124,9 +124,12 @@ GET /internal/v1/tts/health
 
 ```
 GET /internal/v1/tts/audio/{filename}
+GET /ai/tts/audio/{filename}           # 旧版兼容
 ```
 
 本地降级生成的音频文件通过 FastAPI `StaticFiles` 提供静态服务。音频文件默认在 30 分钟后过期并被后台任务清理。
+
+> **旧版兼容**：`POST /ai/tts/synthesize` 可作为 `/speech` 的别名使用，行为完全一致。
 
 ---
 
