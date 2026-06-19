@@ -83,6 +83,75 @@ def _error_response(
 # ── 辅助函数 ─────────────────────────────────────────────────────────────
 
 
+def _parse_wav_header(data: bytes) -> dict:
+    """解析 WAV 文件头，提取音频格式参数。
+
+    Returns:
+        dict 包含 sample_rate, bits_per_sample, channels, data_size, duration_seconds,
+        或空 dict（非 WAV 或解析失败）。
+    """
+    try:
+        import struct
+
+        if len(data) < 44 or data[:4] != b"RIFF":
+            return {}
+
+        # fmt  chunk 偏移（通常紧跟 "WAVE"fmt "）
+        if data[8:12] != b"WAVE":
+            return {}
+        if data[12:16] != b"fmt ":
+            return {}
+
+        # 读取 fmt 子块
+        fmt_size = struct.unpack_from("<I", data, 16)[0]
+        if fmt_size < 16 or len(data) < 20 + fmt_size:
+            return {}
+
+        audio_format = struct.unpack_from("<H", data, 20)[0]
+        if audio_format != 1:  # 仅支持 PCM
+            return {}  # 回退到粗略估算
+
+        channels = struct.unpack_from("<H", data, 22)[0]
+        sample_rate = struct.unpack_from("<I", data, 24)[0]
+        byte_rate = struct.unpack_from("<I", data, 28)[0]
+        block_align = struct.unpack_from("<H", data, 32)[0]
+        bits_per_sample = struct.unpack_from("<H", data, 34)[0]
+
+        # 查找 data chunk
+        data_offset = data.find(b"data", 36)
+        if data_offset < 0:
+            return {}
+        data_size = struct.unpack_from("<I", data, data_offset + 4)[0]
+        # 如果 data_size 为 0 或明显不合理，用文件剩余部分估算
+        actual_data_size = min(data_size, len(data) - data_offset - 8) if data_size > 0 else len(data) - data_offset - 8
+
+        if byte_rate > 0:
+            duration_seconds = actual_data_size / byte_rate
+        else:
+            bytes_per_second = sample_rate * channels * (bits_per_sample // 8)
+            duration_seconds = actual_data_size / bytes_per_second if bytes_per_second > 0 else 0.0
+
+        return {
+            "sample_rate": sample_rate,
+            "bits_per_sample": bits_per_sample,
+            "channels": channels,
+            "data_size": actual_data_size,
+            "duration_seconds": duration_seconds,
+        }
+    except Exception:
+        return {}
+
+
+def _estimate_duration_seconds(data: bytes) -> float:
+    """估算音频时长（秒），优先从 WAV 头解析，否则按 16kHz mono 16bit 粗略估算。"""
+    wav_info = _parse_wav_header(data)
+    if wav_info:
+        return wav_info["duration_seconds"]
+
+    # 非 WAV 格式回退到粗略估算（16kHz, 16bit, mono）
+    return len(data) / 32000.0
+
+
 def _validate_and_read_audio(
     upload: UploadFile, request_id: Optional[str] = None
 ) -> Union[bytes, JSONResponse]:
@@ -134,16 +203,16 @@ def _validate_and_read_audio(
         )
 
     # 5. 校验音频时长（§7.2: 最大 30 秒）
-    # 使用原始字节数估算，不受 _estimate_duration_ms 的上限裁剪影响
-    raw_seconds = len(data) / 32000.0
-    if raw_seconds > MAX_DURATION_SECONDS:
+    # 优先从 WAV 头解析真实参数，回退到 16kHz mono 16bit 粗略估算
+    estimated_seconds = _estimate_duration_seconds(data)
+    if estimated_seconds > MAX_DURATION_SECONDS:
         return _error_response(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             code="AUDIO_TOO_LONG",
             message=f"音频时长过长，最大允许 {MAX_DURATION_SECONDS} 秒",
             details={
                 "max_duration_seconds": MAX_DURATION_SECONDS,
-                "estimated_duration_seconds": round(raw_seconds, 1),
+                "estimated_duration_seconds": round(estimated_seconds, 1),
             },
             request_id=request_id,
         )
@@ -154,10 +223,9 @@ def _validate_and_read_audio(
 def _estimate_duration_ms(audio_bytes: bytes) -> int:
     """根据音频字节数估算时长（毫秒），用于 Mock 模式。
 
-    假设 PCM 16-bit 单声道 16kHz，1 秒 ≈ 32000 字节。
-    WAV / WebM 包含容器开销，此处为粗略估算。
+    优先解析 WAV 头获取真实参数，否则按 16kHz mono 16bit 粗略估算。
     """
-    raw_seconds = len(audio_bytes) / 32000.0
+    raw_seconds = _estimate_duration_seconds(audio_bytes)
     return max(100, min(int(raw_seconds * 1000), MAX_DURATION_SECONDS * 1000))
 
 

@@ -214,6 +214,140 @@ python scripts/e2e_test.py
 8. TTS: 语音合成 → POST /internal/v1/tts/speech
 ```
 
+## 本地音频流水线测试
+
+测试本地音频文件经过完整 **ASR → NLU** 流水线的端到端效果。
+
+### 流水线概览
+
+```mermaid
+flowchart LR
+    WAV["本地 WAV 文件\n(录音 / TTS 合成)"] --> ASR["ASR 转写\nPOST /asr/transcriptions"]
+    ASR -->|text| NLU["NLU 意图解析\nPOST /nlu/interpret"]
+    NLU -->|actions JSON| Result["设备控制指令"]
+```
+
+### 方式一：curl 分步测试
+
+```bash
+# 前提：AI Service 已启动在 8001 端口
+# uvicorn src.main:app --port 8001
+
+# Step 1: 上传音频 → 获取转写文本
+curl -s -X POST http://127.0.0.1:8001/internal/v1/asr/transcriptions \
+  -F "audio=@./test_code/output.wav;type=audio/wav" \
+  | tee /tmp/asr_result.json
+
+# 提取转写文本
+TEXT=$(cat /tmp/asr_result.json | python -c "import sys,json; print(json.load(sys.stdin)['text'])")
+echo "ASR 转写: $TEXT"
+
+# Step 2: 将转写文本送入 NLU → 获取动作指令
+curl -s -X POST http://127.0.0.1:8001/internal/v1/nlu/interpret \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"text\": \"$TEXT\",
+    \"devices\": [
+      {\"id\":\"ac-living-001\",\"type\":\"air_conditioner\",\"name\":\"中央空调\",\"room\":\"客厅\",\"online\":true,
+       \"commands\":[{\"name\":\"turn_on\",\"params\":{}},{\"name\":\"turn_off\",\"params\":{}},{\"name\":\"set_temperature\",\"params\":{\"temperature\":{\"type\":\"integer\",\"min\":16,\"max\":30}}}]},
+      {\"id\":\"light-living-001\",\"type\":\"light\",\"name\":\"客厅主灯\",\"room\":\"客厅\",\"online\":true,
+       \"commands\":[{\"name\":\"turn_on\",\"params\":{}},{\"name\":\"turn_off\",\"params\":{}},{\"name\":\"set_brightness\",\"params\":{\"brightness\":{\"type\":\"integer\",\"min\":0,\"max\":100}}}]},
+      {\"id\":\"tv-living-001\",\"type\":\"tv\",\"name\":\"智能电视\",\"room\":\"客厅\",\"online\":true,
+       \"commands\":[{\"name\":\"turn_on\",\"params\":{}},{\"name\":\"turn_off\",\"params\":{}}]}
+    ],
+    \"scenes\": [
+      {\"id\":\"home\",\"name\":\"回家\"},
+      {\"id\":\"movie\",\"name\":\"观影\"},
+      {\"id\":\"sleep\",\"name\":\"睡眠\"}
+    ]
+  }" | python -m json.tool
+```
+
+> **Windows 用户注意**：PowerShell 不支持 `tee`，`$()` 语法也不同。建议直接使用下方的 Python 脚本方式。
+
+### 方式二：Python 脚本一键测试
+
+将以下脚本保存为 `test_pipeline.py`，修改 `AUDIO_FILE` 为你的音频文件路径：
+
+```python
+#!/usr/bin/env python3
+"""本地音频 → ASR → NLU 流水线测试"""
+import json, sys, urllib.request, urllib.error
+
+BASE = "http://127.0.0.1:8001"
+AUDIO_FILE = "./test_code/output.wav"
+
+# 测试设备列表（需与 backend-core 中的设备注册表一致）
+DEVICES = [
+    {"id":"ac-living-001","type":"air_conditioner","name":"中央空调","room":"客厅","online":True,
+     "commands":[{"name":"turn_on","params":{}},{"name":"turn_off","params":{}},
+                 {"name":"set_temperature","params":{"temperature":{"type":"integer","min":16,"max":30}}}]},
+    {"id":"light-living-001","type":"light","name":"客厅主灯","room":"客厅","online":True,
+     "commands":[{"name":"turn_on","params":{}},{"name":"turn_off","params":{}},
+                 {"name":"set_brightness","params":{"brightness":{"type":"integer","min":0,"max":100}}}]},
+    {"id":"tv-living-001","type":"tv","name":"智能电视","room":"客厅","online":True,
+     "commands":[{"name":"turn_on","params":{}},{"name":"turn_off","params":{}}]},
+]
+SCENES = [{"id":"home","name":"回家"},{"id":"movie","name":"观影"},{"id":"sleep","name":"睡眠"}]
+
+def post_json(path, data):
+    req = urllib.request.Request(f"{BASE}{path}",
+        data=json.dumps(data).encode(), headers={"Content-Type":"application/json"}, method="POST")
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read())
+
+def post_audio(path, audio_bytes, content_type="audio/wav"):
+    boundary = "----PipelineTest"
+    body = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"audio\"; filename=\"test.wav\"\r\n"
+            f"Content-Type: {content_type}\r\n\r\n").encode() + audio_bytes + f"\r\n--{boundary}--\r\n".encode()
+    req = urllib.request.Request(f"{BASE}{path}", data=body,
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"}, method="POST")
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.loads(r.read())
+
+# Step 1: ASR 转写
+with open(AUDIO_FILE, "rb") as f:
+    audio = f.read()
+
+asr = post_audio("/internal/v1/asr/transcriptions", audio)
+text = asr["text"]
+print(f"[ASR] 转写文本: \"{text}\"  (引擎: {asr.get('engine')}, 置信度: {asr.get('confidence')})")
+
+# Step 2: NLU 意图解析
+nlu = post_json("/internal/v1/nlu/interpret", {
+    "text": text,
+    "devices": DEVICES,
+    "scenes": SCENES,
+})
+print(f"[NLU] 理解: {'是' if nlu['understood'] else '否'} | 回复: \"{nlu['reply']}\"")
+for action in nlu.get("actions", []):
+    if action.get("kind") == "device_command":
+        print(f"  → 设备: {action['device_id']}, 命令: {action['command']}, 参数: {action.get('params', {})}")
+    elif action.get("kind") == "scene":
+        print(f"  → 场景: {action['scene_id']}")
+
+print(f"\n✅ 流水线完成: 音频 → \"{text}\" → {len(nlu['actions'])} 个动作")
+```
+
+### 方式三：TTS 往返测试
+
+```bash
+# 一键执行：TTS 合成中文语音 → ASR 转写 → 文本对比
+python scripts/test_asr_real.py --mode roundtrip
+```
+
+此脚本自动完成：pyttsx3 合成已知文本 → 上传 ASR → 比较转写结果，无需手动准备音频文件。
+
+### 流水线测试速查
+
+| 测试目的 | 命令 | 需要服务 |
+|----------|------|----------|
+| 单模块单元测试 | `pytest tests/ -v` | ❌ |
+| 端到端流水线（Mock 音频） | `python scripts/e2e_test.py` | ✅ |
+| 真实音频 ASR 测试 | `python scripts/test_asr_real.py --mode file --audio ./test.wav` | ✅ |
+| TTS → ASR 往返测试 | `python scripts/test_asr_real.py --mode roundtrip` | ✅ |
+| 完整 ASR → NLU 流水线 | 使用上方 Python 脚本或 curl 分步 | ✅ |
+
 ## 配置
 
 | 环境变量 | 必需 | 默认值 | 说明 |
