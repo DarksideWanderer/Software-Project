@@ -9,13 +9,15 @@ router = APIRouter(prefix="/assistant", tags=["Assistant"])
 
 
 class AssistantMessageRequest(BaseModel):
-    text: str = Field(..., description="用户输入的自然语言指令")
+    text: str | None = Field(default=None, description="用户输入的自然语言指令")
+    message: str | None = Field(default=None, description="兼容字段：等同于 text")
     conversation: list[dict[str, Any]] = Field(default_factory=list)
 
 
 @router.post("/messages")
 async def send_assistant_message(req: AssistantMessageRequest):
-    return await home_orchestrator.execute_assistant_text(req.text, req.conversation)
+    text = req.text if req.text is not None else req.message
+    return await home_orchestrator.execute_assistant_text(text or "", req.conversation)
 
 
 @router.post("/voice")

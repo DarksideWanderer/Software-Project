@@ -913,6 +913,8 @@ svg {
 }
 
 .assistant-wrap {
+  --assistant-dock-height: 70px;
+  --assistant-gap: 14px;
   position: fixed;
   z-index: 50;
   left: 50%;
@@ -924,7 +926,7 @@ svg {
 .assistant-dock {
   position: relative;
   display: flex;
-  height: 70px;
+  height: var(--assistant-dock-height);
   align-items: center;
   gap: 13px;
   padding: 9px 10px 9px 9px;
@@ -1090,10 +1092,14 @@ svg {
 }
 
 .chat-panel {
-  position: fixed;
-  right: 24px;
-  top: 24px;
-  width: min(420px, 100%);
+  position: absolute;
+  right: 0;
+  bottom: calc(var(--assistant-dock-height) + var(--assistant-gap));
+  width: 100%;
+  max-height: min(430px, calc(100vh - var(--assistant-dock-height) - var(--assistant-gap) - 48px));
+  max-height: min(430px, calc(100svh - var(--assistant-dock-height) - var(--assistant-gap) - 48px));
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 26px;
@@ -1101,15 +1107,15 @@ svg {
   box-shadow: var(--shadow-lg);
   opacity: 0;
   pointer-events: none;
-  transform: translateY(15px) scale(0.97);
-  transform-origin: top right;
+  transform: translateY(14px) scale(0.98);
+  transform-origin: bottom center;
   transition: 260ms var(--ease);
   backdrop-filter: blur(30px);
 }
 
 .assistant-wrap.chat-open .chat-panel {
   opacity: 1;
-  pointer-events: none;
+  pointer-events: auto;
   transform: translateY(0) scale(1);
 }
 
@@ -1185,6 +1191,7 @@ svg {
 }
 
 .messages {
+  flex: 1 1 auto;
   max-height: 150px;
   min-height: 104px;
   overflow-y: auto;
@@ -1280,6 +1287,7 @@ svg {
 
 .suggestion-row {
   display: flex;
+  flex: 0 0 auto;
   gap: 7px;
   overflow-x: auto;
   padding: 8px 18px 17px;
@@ -1830,12 +1838,14 @@ svg {
   }
 
   .assistant-wrap {
+    --assistant-dock-height: 64px;
+    --assistant-gap: 10px;
     bottom: 10px;
     width: calc(100% - 20px);
   }
 
   .assistant-dock {
-    height: 64px;
+    height: var(--assistant-dock-height);
     border-radius: 21px;
   }
 
@@ -1845,11 +1855,11 @@ svg {
   }
 
   .chat-panel {
-    position: absolute;
-    top: auto;
     right: 0;
-    bottom: 75px;
+    bottom: calc(var(--assistant-dock-height) + var(--assistant-gap));
     width: 100%;
+    max-height: min(430px, calc(100vh - var(--assistant-dock-height) - var(--assistant-gap) - 30px));
+    max-height: min(430px, calc(100svh - var(--assistant-dock-height) - var(--assistant-gap) - 30px));
   }
 
   .page-footer {

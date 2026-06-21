@@ -40,6 +40,16 @@ async def client():
 
 
 @pytest.mark.asyncio
+async def test_root_info(client: AsyncClient):
+    """测试根路径给浏览器用户可读入口说明"""
+    resp = await client.get("/")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["service"] == "ai-service"
+    assert body["endpoints"]["internal_health"] == "/internal/health"
+
+
+@pytest.mark.asyncio
 async def test_health_check(client: AsyncClient):
     """测试全局健康检查"""
     resp = await client.get("/ai/health")

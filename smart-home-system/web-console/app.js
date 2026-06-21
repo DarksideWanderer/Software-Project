@@ -386,12 +386,20 @@ async function startRecording() {
     finishRecording();
     return;
   }
+  if (!navigator.mediaDevices?.getUserMedia) {
+    showToast("无法访问麦克风，请检查浏览器权限");
+    return;
+  }
 
+  let stream;
+  let audioContext;
+  let source;
+  let processor;
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const audioContext = new AudioContext();
-    const source = audioContext.createMediaStreamSource(stream);
-    const processor = audioContext.createScriptProcessor(4096, 1, 1);
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioContext = new AudioContext();
+    source = audioContext.createMediaStreamSource(stream);
+    processor = audioContext.createScriptProcessor(4096, 1, 1);
     const chunks = [];
 
     processor.onaudioprocess = (event) => {
@@ -410,6 +418,17 @@ async function startRecording() {
     dom.voiceButton.setAttribute("aria-label", "停止录音");
     recordingTimer = window.setTimeout(finishRecording, 5000);
   } catch (error) {
+    window.clearTimeout(recordingTimer);
+    isRecording = false;
+    recordingSession = null;
+    processor?.disconnect();
+    source?.disconnect();
+    stream?.getTracks().forEach((track) => track.stop());
+    await audioContext?.close().catch(() => {});
+    dom.assistantWrap.classList.remove("recording");
+    dom.voiceButton.classList.remove("recording");
+    dom.assistantStatus.textContent = "栖居智能助手";
+    dom.voiceButton.setAttribute("aria-label", "按下开始语音");
     showToast("无法访问麦克风，请检查浏览器权限");
   }
 }

@@ -11,6 +11,33 @@ async def _client():
 
 
 @pytest.mark.asyncio
+async def test_root_explains_backend_entrypoints():
+    async with await _client() as client:
+        resp = await client.get("/")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["service"] == "backend-core"
+    assert body["endpoints"]["dashboard"] == "/api/v1/dashboard"
+
+
+@pytest.mark.asyncio
+async def test_file_origin_cors_preflight_for_local_demo():
+    async with await _client() as client:
+        resp = await client.options(
+            "/api/v1/assistant/messages",
+            headers={
+                "Origin": "null",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type",
+            },
+        )
+
+    assert resp.status_code == 200
+    assert resp.headers["access-control-allow-origin"] == "null"
+
+
+@pytest.mark.asyncio
 async def test_dashboard_exposes_three_demo_devices():
     async with await _client() as client:
         resp = await client.get("/api/v1/dashboard")
@@ -75,6 +102,29 @@ async def test_assistant_message_executes_nlu_actions(monkeypatch):
     assert body["understood"] is True
     assert body["actions"][0]["device_id"] == "ac-001"
     assert body["results"][0]["command"] == "set_temperature"
+
+
+@pytest.mark.asyncio
+async def test_assistant_message_accepts_message_alias(monkeypatch):
+    async def fake_call_nlu(text, conversation=None):
+        assert text == "打开客厅灯"
+        return {
+            "understood": True,
+            "reply": "好的，客厅主灯已打开。",
+            "actions": [
+                {"kind": "device_command", "device_id": "light-001", "command": "turn_on", "params": {}}
+            ],
+        }
+
+    monkeypatch.setattr(home_orchestrator, "call_nlu", fake_call_nlu)
+
+    async with await _client() as client:
+        resp = await client.post("/api/v1/assistant/messages", json={"message": "打开客厅灯"})
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["text"] == "打开客厅灯"
+    assert body["actions"][0]["device_id"] == "light-001"
 
 
 @pytest.mark.asyncio

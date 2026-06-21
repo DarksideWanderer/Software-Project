@@ -81,6 +81,22 @@ async def health_check():
     return {"status": "ok", "service": "ai-service"}
 
 
+@app.get("/", tags=["System"])
+async def root():
+    return {
+        "service": "ai-service",
+        "status": "ok",
+        "message": "AI Service is running. Open /docs for API docs or /internal/health for model status.",
+        "endpoints": {
+            "docs": "/docs",
+            "internal_health": "/internal/health",
+            "asr": "/internal/v1/asr/transcriptions",
+            "nlu": "/internal/v1/nlu/interpret",
+            "tts": "/internal/v1/tts/speech",
+        },
+    }
+
+
 @app.get("/internal/health", tags=["System"])
 async def internal_health():
     """AI 服务内部健康检查 — FRONTEND_API_REQUIREMENTS.md §11.2。
