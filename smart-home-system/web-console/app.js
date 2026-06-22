@@ -1,113 +1,4 @@
-const devices = {
-  aircon: {
-    id: "aircon",
-    name: "中央空调",
-    room: "客厅",
-    icon: "icon-ac",
-    type: "aircon",
-    power: true,
-    online: true,
-    temperature: 24,
-    mode: "自动",
-    wind: "中风",
-    energy: "1.2 kWh",
-    updated: "刚刚",
-    color: "#4488a5",
-    soft: "#e0eff5",
-    glow: "rgba(134, 184, 215, .36)",
-  },
-  livingLight: {
-    id: "livingLight",
-    name: "客厅主灯",
-    room: "客厅",
-    icon: "icon-light",
-    type: "light",
-    power: true,
-    online: true,
-    brightness: 72,
-    colorTemperature: 4200,
-    energy: "0.3 kWh",
-    updated: "刚刚",
-    color: "#ad8038",
-    soft: "#f5ead5",
-    glow: "rgba(237, 182, 94, .36)",
-  },
-  bedroomLight: {
-    id: "bedroomLight",
-    name: "卧室氛围灯",
-    room: "主卧",
-    icon: "icon-light",
-    type: "light",
-    power: false,
-    online: true,
-    brightness: 35,
-    colorTemperature: 3000,
-    energy: "0.1 kWh",
-    updated: "1 分钟前",
-    color: "#9d72a8",
-    soft: "#f0e5f2",
-    glow: "rgba(158, 145, 200, .32)",
-  },
-  tv: {
-    id: "tv",
-    name: "智能电视",
-    room: "客厅",
-    icon: "icon-tv",
-    type: "tv",
-    power: false,
-    online: true,
-    volume: 32,
-    source: "影音",
-    channel: "栖居影院",
-    energy: "0.0 kWh",
-    updated: "2 分钟前",
-    color: "#7566a0",
-    soft: "#e9e5f3",
-    glow: "rgba(158, 145, 200, .3)",
-  },
-  fridge: {
-    id: "fridge",
-    name: "智能冰箱",
-    room: "厨房",
-    icon: "icon-fridge",
-    type: "fridge",
-    power: true,
-    online: true,
-    temperature: 3,
-    freezerTemperature: -18,
-    mode: "节能",
-    fresh: true,
-    energy: "0.9 kWh",
-    updated: "刚刚",
-    color: "#397e72",
-    soft: "#deeee9",
-    glow: "rgba(110, 190, 165, .3)",
-  },
-  fan: {
-    id: "fan",
-    name: "循环风扇",
-    room: "主卧",
-    icon: "icon-fan",
-    type: "fan",
-    power: true,
-    online: true,
-    speed: 2,
-    oscillation: true,
-    timer: "关闭",
-    energy: "0.2 kWh",
-    updated: "刚刚",
-    color: "#397499",
-    soft: "#deebf2",
-    glow: "rgba(134, 184, 215, .32)",
-  },
-};
-
-const sceneNames = {
-  home: "回家模式",
-  movie: "观影模式",
-  sleep: "睡眠模式",
-  away: "离家模式",
-};
+const API_BASE = window.SMART_HOME_API_BASE || "http://127.0.0.1:8000/api/v1";
 
 const dom = {
   deviceGrid: document.querySelector("#deviceGrid"),
@@ -127,39 +18,87 @@ const dom = {
   toastRegion: document.querySelector("#toastRegion"),
 };
 
+let devices = {};
+let scenes = [];
 let activeDeviceId = null;
 let isRecording = false;
 let recordingTimer = null;
+let recordingSession = null;
 
 function iconMarkup(icon) {
   return `<svg aria-hidden="true"><use href="#${icon}"></use></svg>`;
 }
 
-function getDeviceReading(device) {
-  if (!device.power) {
-    return { value: "已关闭", unit: "", label: "待机" };
-  }
+function escapeHtml(text) {
+  const element = document.createElement("div");
+  element.textContent = text;
+  return element.innerHTML;
+}
 
-  switch (device.type) {
-    case "aircon":
-      return { value: `${device.temperature}°`, unit: "", label: device.mode };
-    case "light":
-      return { value: `${device.brightness}`, unit: "%", label: "亮度" };
-    case "tv":
-      return { value: `${device.volume}`, unit: "%", label: device.source };
-    case "fridge":
-      return { value: `${device.temperature}°`, unit: "C", label: device.mode };
-    case "fan":
-      return { value: `${device.speed}`, unit: "档", label: device.oscillation ? "摇头送风" : "定向送风" };
-    default:
-      return { value: "运行中", unit: "", label: "在线" };
+async function apiRequest(path, options = {}) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: options.body instanceof FormData
+      ? options.headers
+      : { "Content-Type": "application/json", ...(options.headers || {}) },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const detail = typeof data.detail === "string" ? data.detail : "服务暂时不可用";
+    throw new Error(detail);
+  }
+  return data;
+}
+
+function normalizeDeviceList(list) {
+  devices = Object.fromEntries(list.map((device) => [device.id, device]));
+}
+
+async function loadDashboard(options = {}) {
+  try {
+    const dashboard = await apiRequest("/dashboard");
+    normalizeDeviceList(dashboard.devices || []);
+    scenes = dashboard.scenes || [];
+    renderDevices();
+    renderScenes();
+    if (!options.silent) {
+      showToast("设备状态已同步");
+    }
+  } catch (error) {
+    renderOfflineState(error.message);
+    showToast(`无法连接 backend-core：${error.message}`);
   }
 }
 
+function renderOfflineState(message) {
+  dom.deviceGrid.innerHTML = `
+    <article class="device-card" tabindex="0">
+      <div class="device-info">
+        <span class="device-location">BACKEND</span>
+        <h3>后端未连接</h3>
+      </div>
+      <div class="device-card-bottom">
+        <span class="device-state"><strong>离线</strong></span>
+        <span class="device-status-label">${escapeHtml(message)}</span>
+      </div>
+    </article>
+  `;
+  dom.onlineCount.textContent = "0";
+  dom.activeCount.textContent = "0";
+}
+
+function renderScenes() {
+  const knownSceneIds = new Set(scenes.map((scene) => scene.id));
+  document.querySelectorAll(".scene-chip").forEach((chip) => {
+    chip.hidden = !knownSceneIds.has(chip.dataset.scene);
+  });
+}
+
 function renderDevices() {
-  dom.deviceGrid.innerHTML = Object.values(devices)
+  const list = Object.values(devices);
+  dom.deviceGrid.innerHTML = list
     .map((device) => {
-      const reading = getDeviceReading(device);
+      const reading = device.reading || { value: "未知", unit: "", label: "未同步" };
       return `
         <article
           class="device-card ${device.power ? "is-on" : ""}"
@@ -178,10 +117,11 @@ function renderDevices() {
               aria-label="${device.power ? "关闭" : "打开"}${device.name}"
               aria-checked="${device.power}"
               data-toggle-id="${device.id}"
+              ${device.online ? "" : "disabled"}
             ></button>
           </div>
           <div class="device-info">
-            <span class="device-location">${device.room}</span>
+            <span class="device-location">${device.room} · ${device.online ? "在线" : "未连接"}</span>
             <h3>${device.name}</h3>
           </div>
           <div class="device-card-bottom">
@@ -193,24 +133,8 @@ function renderDevices() {
     })
     .join("");
 
-  dom.onlineCount.textContent = Object.values(devices).filter((device) => device.online).length;
-  dom.activeCount.textContent = Object.values(devices).filter((device) => device.power).length;
-}
-
-function toggleDevice(deviceId, nextPower, options = {}) {
-  const device = devices[deviceId];
-  if (!device) return;
-  device.power = typeof nextPower === "boolean" ? nextPower : !device.power;
-  device.updated = "刚刚";
-  renderDevices();
-
-  if (activeDeviceId === deviceId) {
-    renderDrawer(device);
-  }
-
-  if (!options.silent) {
-    showToast(`${device.name}已${device.power ? "打开" : "关闭"}`);
-  }
+  dom.onlineCount.textContent = String(list.filter((device) => device.online).length);
+  dom.activeCount.textContent = String(list.filter((device) => device.power).length);
 }
 
 function showToast(message) {
@@ -218,7 +142,7 @@ function showToast(message) {
   toast.className = "toast";
   toast.textContent = message;
   dom.toastRegion.appendChild(toast);
-  window.setTimeout(() => toast.remove(), 2800);
+  window.setTimeout(() => toast.remove(), 3200);
 }
 
 function openDrawer(deviceId) {
@@ -243,12 +167,12 @@ function closeDrawer() {
 }
 
 function renderDrawer(device) {
-  const reading = getDeviceReading(device);
+  const reading = device.reading || { value: "未知", unit: "", label: "未同步" };
   const controls = getDeviceControls(device);
   dom.drawerContent.innerHTML = `
     <div class="drawer-hero" style="background:linear-gradient(145deg, ${device.color}, #254f42)">
       <div class="drawer-topline">
-        <span class="drawer-room">${device.room.toUpperCase()} · 在线</span>
+        <span class="drawer-room">${device.room.toUpperCase()} · ${device.online ? "在线" : "未连接"}</span>
         <button class="icon-button drawer-close" type="button" aria-label="关闭设备详情">
           ${iconMarkup("icon-close")}
         </button>
@@ -259,14 +183,15 @@ function renderDrawer(device) {
           <h2>${device.name}</h2>
           <p>${device.power ? `${reading.value}${reading.unit} · ${reading.label}` : "设备当前处于待机状态"}</p>
         </div>
-        <button class="power-button ${device.power ? "on" : ""}" type="button" aria-label="${device.power ? "关闭" : "打开"}${device.name}"></button>
+        <button class="power-button ${device.power ? "on" : ""}" type="button" aria-label="${device.power ? "关闭" : "打开"}${device.name}" ${device.online ? "" : "disabled"}></button>
       </div>
     </div>
+    ${device.online ? "" : '<p class="drawer-offline-note">请先启动对应 C++ 设备模拟器</p>'}
     ${device.power ? "" : '<p class="drawer-offline-note">打开设备后即可调整详细控制选项</p>'}
-    <div class="drawer-controls ${device.power ? "" : "drawer-disabled"}">
+    <div class="drawer-controls ${device.power && device.online ? "" : "drawer-disabled"}">
       ${controls}
       <section class="control-section">
-        <div class="control-title"><strong>设备信息</strong><span>状态健康</span></div>
+        <div class="control-title"><strong>设备信息</strong><span>真实后端状态</span></div>
         <div class="mini-stat-grid">
           <div class="mini-stat"><span>今日用电</span><strong>${device.energy}</strong></div>
           <div class="mini-stat"><span>最近同步</span><strong>${device.updated}</strong></div>
@@ -276,22 +201,14 @@ function renderDrawer(device) {
   `;
 }
 
-function updateDrawerSummary(device) {
-  const summary = dom.drawerContent.querySelector(".drawer-device-summary p");
-  if (!summary) return;
-  const reading = getDeviceReading(device);
-  summary.textContent = device.power
-    ? `${reading.value}${reading.unit} · ${reading.label}`
-    : "设备当前处于待机状态";
-}
-
-function rangeControl(label, property, value, min, max, suffix, displayValue = value) {
-  const progress = ((value - min) / (max - min)) * 100;
+function rangeControl(label, property, value, min, max, suffix, command, param) {
+  const safeValue = Number(value ?? min);
+  const progress = ((safeValue - min) / (max - min)) * 100;
   return `
     <section class="control-section">
       <div class="range-heading">
         <label for="control-${property}">${label}</label>
-        <output id="output-${property}">${displayValue}${suffix}</output>
+        <output id="output-${property}">${safeValue}${suffix}</output>
       </div>
       <input
         class="range-control"
@@ -299,136 +216,87 @@ function rangeControl(label, property, value, min, max, suffix, displayValue = v
         type="range"
         min="${min}"
         max="${max}"
-        value="${value}"
+        value="${safeValue}"
         data-property="${property}"
         data-suffix="${suffix}"
+        data-command="${command}"
+        data-param="${param}"
         style="--value:${progress}%"
       />
     </section>
   `;
 }
 
-function segmentedControl(title, property, options, activeValue) {
-  return `
-    <section class="control-section">
-      <div class="control-title"><strong>${title}</strong><span>${activeValue}</span></div>
-      <div class="segmented-control" data-property="${property}">
-        ${options
-          .map(
-            (option) => `
-              <button
-                class="segment-button ${option === activeValue ? "active" : ""}"
-                type="button"
-                data-value="${option}"
-              >${option}</button>
-            `,
-          )
-          .join("")}
-      </div>
-    </section>
-  `;
-}
-
-function inlineToggle(title, description, property, checked) {
-  return `
-    <div class="inline-toggle-row">
-      <div class="inline-toggle-copy">
-        <strong>${title}</strong>
-        <small>${description}</small>
-      </div>
-      <button
-        class="toggle inline-toggle"
-        type="button"
-        role="switch"
-        aria-checked="${checked}"
-        data-property="${property}"
-      ></button>
-    </div>
-  `;
-}
-
 function getDeviceControls(device) {
+  const state = device.state || {};
   switch (device.type) {
-    case "aircon":
-      return `
-        ${rangeControl("设定温度", "temperature", device.temperature, 16, 30, "°")}
-        ${segmentedControl("运行模式", "mode", ["制冷", "自动", "除湿", "送风"], device.mode)}
-        ${segmentedControl("风速", "wind", ["低风", "中风", "高风"], device.wind)}
-      `;
+    case "air_conditioner":
+      return rangeControl("设定温度", "temperature", state.temperature, 16, 30, "°", "set_temperature", "temperature");
     case "light":
-      return `
-        ${rangeControl("灯光亮度", "brightness", device.brightness, 1, 100, "%")}
-        ${rangeControl("色温", "colorTemperature", device.colorTemperature, 2700, 6500, "K")}
-        ${segmentedControl("光效预设", "lightPreset", ["阅读", "放松", "自然"], "自然")}
-      `;
+      return rangeControl("灯光亮度", "brightness", state.brightness, 0, 100, "%", "set_brightness", "brightness");
     case "tv":
       return `
-        ${rangeControl("音量", "volume", device.volume, 0, 100, "%")}
-        ${segmentedControl("信号源", "source", ["影音", "电视", "游戏"], device.source)}
-        <section class="control-section">
-          <div class="control-title"><strong>正在播放</strong><span>${device.channel}</span></div>
-          <div class="mini-stat-grid">
-            <div class="mini-stat"><span>画面模式</span><strong>影院</strong></div>
-            <div class="mini-stat"><span>声音模式</span><strong>空间音频</strong></div>
-          </div>
-        </section>
-      `;
-    case "fridge":
-      return `
-        ${rangeControl("冷藏室温度", "temperature", device.temperature, 1, 8, "°")}
-        ${rangeControl("冷冻室温度", "freezerTemperature", device.freezerTemperature, -24, -14, "°")}
-        ${segmentedControl("运行模式", "mode", ["速冷", "节能", "假日"], device.mode)}
-        <section class="control-section">
-          ${inlineToggle("智能保鲜", "根据食材自动调节湿度", "fresh", device.fresh)}
-        </section>
-      `;
-    case "fan":
-      return `
-        ${rangeControl("风速档位", "speed", device.speed, 1, 5, " 档")}
-        ${segmentedControl("定时关闭", "timer", ["关闭", "1 小时", "2 小时", "4 小时"], device.timer)}
-        <section class="control-section">
-          ${inlineToggle("左右摇头", "扩大室内空气循环范围", "oscillation", device.oscillation)}
-        </section>
+        ${rangeControl("音量", "volume", state.volume, 0, 100, "%", "set_volume", "volume")}
+        ${rangeControl("频道", "channel", state.channel, 1, 99, "", "set_channel", "channel")}
       `;
     default:
       return "";
   }
 }
 
-function applyScene(sceneId, options = {}) {
+function updateDeviceFromResponse(response) {
+  if (response.device) {
+    devices[response.device.id] = response.device;
+  }
+  if (Array.isArray(response.devices)) {
+    normalizeDeviceList(response.devices);
+  }
+  renderDevices();
+  if (activeDeviceId && devices[activeDeviceId]) {
+    renderDrawer(devices[activeDeviceId]);
+  }
+}
+
+async function runDeviceCommand(deviceId, command, params = {}) {
+  const response = await apiRequest(`/devices/${deviceId}/commands`, {
+    method: "POST",
+    body: JSON.stringify({ command, params }),
+  });
+  if (!response.success) {
+    throw new Error(response.message || "设备命令执行失败");
+  }
+  updateDeviceFromResponse(response);
+  return response;
+}
+
+async function toggleDevice(deviceId) {
+  const device = devices[deviceId];
+  if (!device) return;
+  try {
+    const command = device.power ? "turn_off" : "turn_on";
+    await runDeviceCommand(deviceId, command);
+    showToast(`${device.name}已${device.power ? "关闭" : "打开"}`);
+  } catch (error) {
+    showToast(error.message);
+    await loadDashboard({ silent: true });
+  }
+}
+
+async function applyScene(sceneId) {
   document.querySelectorAll(".scene-chip").forEach((chip) => {
     chip.classList.toggle("running", chip.dataset.scene === sceneId);
   });
-
-  switch (sceneId) {
-    case "home":
-      Object.assign(devices.aircon, { power: true, temperature: 24, mode: "自动" });
-      Object.assign(devices.livingLight, { power: true, brightness: 72 });
-      Object.assign(devices.bedroomLight, { power: false });
-      break;
-    case "movie":
-      Object.assign(devices.tv, { power: true, volume: 28, source: "影音" });
-      Object.assign(devices.livingLight, { power: true, brightness: 18, colorTemperature: 3000 });
-      Object.assign(devices.bedroomLight, { power: false });
-      break;
-    case "sleep":
-      Object.assign(devices.aircon, { power: true, temperature: 26, mode: "自动", wind: "低风" });
-      Object.assign(devices.bedroomLight, { power: true, brightness: 12, colorTemperature: 2700 });
-      Object.assign(devices.livingLight, { power: false });
-      Object.assign(devices.tv, { power: false });
-      Object.assign(devices.fan, { power: false });
-      break;
-    case "away":
-      Object.values(devices).forEach((device) => {
-        if (device.type !== "fridge") device.power = false;
-      });
-      break;
-    default:
-      return;
+  try {
+    const response = await apiRequest(`/scenes/${sceneId}/execute`, { method: "POST" });
+    updateDeviceFromResponse(response);
+    showToast(`${response.scene?.name || "场景"}已执行`);
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    window.setTimeout(() => {
+      document.querySelector(`[data-scene="${sceneId}"]`)?.classList.remove("running");
+    }, 1200);
   }
-
-  renderDevices();
-  if (!options.silent) showToast(`${sceneNames[sceneId]}已开启`);
 }
 
 function openChat() {
@@ -454,12 +322,6 @@ function addMessage(text, sender) {
   dom.messages.scrollTop = dom.messages.scrollHeight;
 }
 
-function escapeHtml(text) {
-  const element = document.createElement("div");
-  element.textContent = text;
-  return element.innerHTML;
-}
-
 function showTyping() {
   const typing = document.createElement("div");
   typing.className = "message assistant-message";
@@ -472,100 +334,7 @@ function showTyping() {
   dom.messages.scrollTop = dom.messages.scrollHeight;
 }
 
-function respondToCommand(command) {
-  const normalized = command.replace(/\s+/g, "");
-  const target = findTargetDevice(normalized);
-  const wantsOff = /关闭|关掉|关上|停掉/.test(normalized);
-  const wantsOn = /打开|开启|启动|开开/.test(normalized);
-
-  if (/回家模式|回家场景/.test(normalized)) {
-    applyScene("home", { silent: true });
-    return "回家模式已开启：客厅灯和空调已调整到舒适状态。";
-  }
-  if (/观影模式|看电影|影院模式/.test(normalized)) {
-    applyScene("movie", { silent: true });
-    return "观影模式已开启：电视已打开，客厅灯已调暗至 18%。";
-  }
-  if (/睡眠模式|睡觉模式|我要睡觉/.test(normalized)) {
-    applyScene("sleep", { silent: true });
-    return "睡眠模式已开启：非必要设备已关闭，卧室夜灯保持 12% 亮度。";
-  }
-  if (/离家模式|我要出门|离开家/.test(normalized)) {
-    applyScene("away", { silent: true });
-    return "离家模式已开启：除冰箱外的设备均已关闭。";
-  }
-  if (/全部关闭|关闭全部|所有设备.*关/.test(normalized)) {
-    Object.values(devices).forEach((device) => {
-      if (device.type !== "fridge") device.power = false;
-    });
-    renderDevices();
-    return "已关闭除冰箱外的所有设备。";
-  }
-  if (!target) {
-    return "我暂时没找到对应设备。你可以试试说“打开客厅灯”或“空调调到 22 度”。";
-  }
-
-  const device = devices[target];
-  const numberMatch = normalized.match(/-?\d+/);
-  const value = numberMatch ? Number(numberMatch[0]) : null;
-
-  if (wantsOff) {
-    toggleDevice(target, false, { silent: true });
-    return `${device.name}已关闭。`;
-  }
-
-  if (value !== null) {
-    if (device.type === "aircon" && /度|温度|调到/.test(normalized)) {
-      device.temperature = Math.min(30, Math.max(16, value));
-      device.power = true;
-      renderDevices();
-      return `好的，${device.name}已调到 ${device.temperature}°。`;
-    }
-    if (device.type === "light" && /亮度|%|百分/.test(normalized)) {
-      device.brightness = Math.min(100, Math.max(1, value));
-      device.power = true;
-      renderDevices();
-      return `${device.name}亮度已调到 ${device.brightness}%。`;
-    }
-    if (device.type === "tv" && /音量|声音/.test(normalized)) {
-      device.volume = Math.min(100, Math.max(0, value));
-      device.power = true;
-      renderDevices();
-      return `电视音量已调到 ${device.volume}%。`;
-    }
-    if (device.type === "fan" && /档|风速/.test(normalized)) {
-      device.speed = Math.min(5, Math.max(1, value));
-      device.power = true;
-      renderDevices();
-      return `风扇已调到 ${device.speed} 档。`;
-    }
-  }
-
-  if (wantsOn || /调到|调成/.test(normalized)) {
-    toggleDevice(target, true, { silent: true });
-    return `${device.name}已打开。`;
-  }
-
-  return `${device.name}目前${device.power ? "正在运行" : "处于关闭状态"}，${getStatusSentence(device)}`;
-}
-
-function findTargetDevice(command) {
-  if (/卧室灯|氛围灯|床头灯/.test(command)) return "bedroomLight";
-  if (/客厅灯|主灯|灯光/.test(command)) return "livingLight";
-  if (/空调/.test(command)) return "aircon";
-  if (/电视|TV/i.test(command)) return "tv";
-  if (/冰箱/.test(command)) return "fridge";
-  if (/风扇/.test(command)) return "fan";
-  return null;
-}
-
-function getStatusSentence(device) {
-  const reading = getDeviceReading(device);
-  if (!device.power) return "需要我帮你打开吗？";
-  return `当前状态为 ${reading.value}${reading.unit}，${reading.label}。`;
-}
-
-function sendCommand(command) {
+async function sendCommand(command) {
   const trimmed = command.trim();
   if (!trimmed) return;
 
@@ -574,32 +343,98 @@ function sendCommand(command) {
   dom.input.value = "";
   showTyping();
 
-  window.setTimeout(() => {
+  try {
+    const response = await apiRequest("/assistant/messages", {
+      method: "POST",
+      body: JSON.stringify({ text: trimmed }),
+    });
     document.querySelector("#typingMessage")?.remove();
-    const response = respondToCommand(trimmed);
-    addMessage(response, "assistant");
-    showToast("智能指令已执行");
-  }, 650);
+    updateDeviceFromResponse(response);
+    addMessage(response.reply || "指令已处理。", "assistant");
+  } catch (error) {
+    document.querySelector("#typingMessage")?.remove();
+    addMessage(`我没能完成这次操作：${error.message}`, "assistant");
+    showToast(error.message);
+  }
 }
 
-function startRecording() {
+async function sendVoiceBlob(blob) {
+  const formData = new FormData();
+  formData.append("audio", blob, "recording.wav");
+  formData.append("language", "zh-CN");
+
+  showTyping();
+  try {
+    const response = await apiRequest("/assistant/voice", {
+      method: "POST",
+      body: formData,
+    });
+    document.querySelector("#typingMessage")?.remove();
+    const transcript = response.transcript?.text || "语音指令";
+    addMessage(transcript, "user");
+    updateDeviceFromResponse(response);
+    addMessage(response.reply || "语音指令已处理。", "assistant");
+  } catch (error) {
+    document.querySelector("#typingMessage")?.remove();
+    addMessage(`语音识别失败：${error.message}`, "assistant");
+    showToast(error.message);
+  }
+}
+
+async function startRecording() {
   if (isRecording) {
     finishRecording();
     return;
   }
+  if (!navigator.mediaDevices?.getUserMedia) {
+    showToast("无法访问麦克风，请检查浏览器权限");
+    return;
+  }
 
-  isRecording = true;
-  openChat();
-  dom.assistantWrap.classList.add("recording");
-  dom.voiceButton.classList.add("recording");
-  dom.assistantStatus.textContent = "正在聆听… 点击可停止";
-  dom.voiceButton.setAttribute("aria-label", "停止录音");
+  let stream;
+  let audioContext;
+  let source;
+  let processor;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioContext = new AudioContext();
+    source = audioContext.createMediaStreamSource(stream);
+    processor = audioContext.createScriptProcessor(4096, 1, 1);
+    const chunks = [];
 
-  recordingTimer = window.setTimeout(finishRecording, 3200);
+    processor.onaudioprocess = (event) => {
+      chunks.push(new Float32Array(event.inputBuffer.getChannelData(0)));
+    };
+
+    source.connect(processor);
+    processor.connect(audioContext.destination);
+    recordingSession = { stream, audioContext, source, processor, chunks, sampleRate: audioContext.sampleRate };
+
+    isRecording = true;
+    openChat();
+    dom.assistantWrap.classList.add("recording");
+    dom.voiceButton.classList.add("recording");
+    dom.assistantStatus.textContent = "正在聆听… 点击可停止";
+    dom.voiceButton.setAttribute("aria-label", "停止录音");
+    recordingTimer = window.setTimeout(finishRecording, 5000);
+  } catch (error) {
+    window.clearTimeout(recordingTimer);
+    isRecording = false;
+    recordingSession = null;
+    processor?.disconnect();
+    source?.disconnect();
+    stream?.getTracks().forEach((track) => track.stop());
+    await audioContext?.close().catch(() => {});
+    dom.assistantWrap.classList.remove("recording");
+    dom.voiceButton.classList.remove("recording");
+    dom.assistantStatus.textContent = "栖居智能助手";
+    dom.voiceButton.setAttribute("aria-label", "按下开始语音");
+    showToast("无法访问麦克风，请检查浏览器权限");
+  }
 }
 
-function finishRecording() {
-  if (!isRecording) return;
+async function finishRecording() {
+  if (!isRecording || !recordingSession) return;
   window.clearTimeout(recordingTimer);
   isRecording = false;
   dom.assistantWrap.classList.remove("recording");
@@ -607,10 +442,62 @@ function finishRecording() {
   dom.assistantStatus.textContent = "正在识别…";
   dom.voiceButton.setAttribute("aria-label", "按下开始语音");
 
-  window.setTimeout(() => {
-    dom.assistantStatus.textContent = "栖居智能助手";
-    sendCommand("把卧室氛围灯调到 35%");
-  }, 600);
+  const { stream, audioContext, source, processor, chunks, sampleRate } = recordingSession;
+  processor.disconnect();
+  source.disconnect();
+  stream.getTracks().forEach((track) => track.stop());
+  await audioContext.close();
+  recordingSession = null;
+
+  const wavBlob = encodeWav(chunks, sampleRate);
+  dom.assistantStatus.textContent = "栖居智能助手";
+  await sendVoiceBlob(wavBlob);
+}
+
+function mergeBuffers(chunks) {
+  const length = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const result = new Float32Array(length);
+  let offset = 0;
+  chunks.forEach((chunk) => {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  });
+  return result;
+}
+
+function encodeWav(chunks, sampleRate) {
+  const samples = mergeBuffers(chunks);
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+
+  writeString(view, 0, "RIFF");
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeString(view, 8, "WAVE");
+  writeString(view, 12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(view, 36, "data");
+  view.setUint32(40, samples.length * 2, true);
+
+  let offset = 44;
+  samples.forEach((sample) => {
+    const clamped = Math.max(-1, Math.min(1, sample));
+    view.setInt16(offset, clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff, true);
+    offset += 2;
+  });
+
+  return new Blob([view], { type: "audio/wav" });
+}
+
+function writeString(view, offset, text) {
+  for (let i = 0; i < text.length; i += 1) {
+    view.setUint8(offset + i, text.charCodeAt(i));
+  }
 }
 
 dom.deviceGrid.addEventListener("click", (event) => {
@@ -637,52 +524,33 @@ dom.drawerContent.addEventListener("click", (event) => {
     closeDrawer();
     return;
   }
-
   if (event.target.closest(".power-button")) {
     toggleDevice(activeDeviceId);
-    return;
-  }
-
-  const segment = event.target.closest(".segment-button");
-  if (segment) {
-    const group = segment.closest(".segmented-control");
-    const property = group.dataset.property;
-    devices[activeDeviceId][property] = segment.dataset.value;
-    renderDrawer(devices[activeDeviceId]);
-    renderDevices();
-    showToast(`${devices[activeDeviceId].name}设置已更新`);
-    return;
-  }
-
-  const inlineToggleButton = event.target.closest(".inline-toggle");
-  if (inlineToggleButton) {
-    const property = inlineToggleButton.dataset.property;
-    devices[activeDeviceId][property] = !devices[activeDeviceId][property];
-    renderDrawer(devices[activeDeviceId]);
-    renderDevices();
-    showToast(`${inlineToggleButton.closest(".inline-toggle-row").querySelector("strong").textContent}已更新`);
   }
 });
 
 dom.drawerContent.addEventListener("input", (event) => {
   const range = event.target.closest(".range-control");
   if (!range) return;
-
-  const property = range.dataset.property;
-  const value = Number(range.value);
   const suffix = range.dataset.suffix;
   const min = Number(range.min);
   const max = Number(range.max);
-  devices[activeDeviceId][property] = value;
-  range.style.setProperty("--value", `${((value - min) / (max - min)) * 100}%`);
-  document.querySelector(`#output-${property}`).textContent = `${value}${suffix}`;
-  renderDevices();
-  updateDrawerSummary(devices[activeDeviceId]);
+  range.style.setProperty("--value", `${((Number(range.value) - min) / (max - min)) * 100}%`);
+  document.querySelector(`#output-${range.dataset.property}`).textContent = `${range.value}${suffix}`;
 });
 
-dom.drawerContent.addEventListener("change", (event) => {
+dom.drawerContent.addEventListener("change", async (event) => {
   const range = event.target.closest(".range-control");
-  if (range) showToast(`${devices[activeDeviceId].name}设置已更新`);
+  if (!range || !activeDeviceId) return;
+  try {
+    await runDeviceCommand(activeDeviceId, range.dataset.command, {
+      [range.dataset.param]: Number(range.value),
+    });
+    showToast(`${devices[activeDeviceId].name}设置已更新`);
+  } catch (error) {
+    showToast(error.message);
+    await loadDashboard({ silent: true });
+  }
 });
 
 document.querySelectorAll(".scene-chip").forEach((chip) => {
@@ -692,10 +560,10 @@ document.querySelectorAll(".scene-chip").forEach((chip) => {
 document.querySelector("#openAssistantButton").addEventListener("click", openChat);
 document.querySelector("#closeChatButton").addEventListener("click", closeChat);
 document.querySelector("#moreScenesButton").addEventListener("click", () => {
-  showToast("场景管理功能将在正式版开放");
+  showToast("课程闭环版本内置回家、观影、离家三个场景");
 });
 document.querySelector("#securityButton").addEventListener("click", () => {
-  showToast("6 台设备在线，网络状态良好");
+  showToast(`${dom.onlineCount.textContent} 台设备已连接 DeviceHub`);
 });
 
 document.querySelectorAll(".nav-item").forEach((item) => {
@@ -703,7 +571,7 @@ document.querySelectorAll(".nav-item").forEach((item) => {
     document.querySelectorAll(".nav-item").forEach((navItem) => navItem.classList.remove("active"));
     item.classList.add("active");
     if (!item.getAttribute("data-tooltip")?.includes("总览")) {
-      showToast(`${item.getAttribute("data-tooltip") || "此"}模块为视觉演示`);
+      showToast(`${item.getAttribute("data-tooltip") || "此"}模块为课程展示入口`);
     }
   });
 });
@@ -728,4 +596,4 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-renderDevices();
+loadDashboard({ silent: true });

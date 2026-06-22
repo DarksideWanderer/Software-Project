@@ -8,7 +8,7 @@
       content="栖居全屋智能中控台 - 家具状态、手动控制与智能助手视觉 Demo"
     />
     <title>栖居 · 全屋智能中控</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260622-scroll-fix" />
   </head>
   <body>
     <svg class="svg-sprite" aria-hidden="true">
@@ -141,7 +141,7 @@
                 栖居智能助手
               </span>
               <h2>舒适，恰到好处。</h2>
-              <p>家中设备已为你调整至舒适状态。试试说“打开客厅灯”，剩下的交给我。</p>
+              <p>三台课程演示设备已接入后端。试试说“打开客厅灯”，剩下的交给我。</p>
               <button class="text-button" id="openAssistantButton" type="button">
                 开始对话
                 <svg><use href="#icon-chevron"></use></svg>
@@ -208,10 +208,6 @@
               <span class="scene-icon movie-scene"><svg><use href="#icon-tv"></use></svg></span>
               <span><strong>观影</strong><small>氛围灯与电视</small></span>
             </button>
-            <button class="scene-chip" type="button" data-scene="sleep">
-              <span class="scene-icon sleep-scene"><svg><use href="#icon-moon"></use></svg></span>
-              <span><strong>睡眠</strong><small>静音与夜灯</small></span>
-            </button>
             <button class="scene-chip" type="button" data-scene="away">
               <span class="scene-icon away-scene"><svg><use href="#icon-shield"></use></svg></span>
               <span><strong>离家</strong><small>关闭非必要设备</small></span>
@@ -226,16 +222,16 @@
               <h2 id="devicesTitle">家的每一处，都在掌握</h2>
             </div>
             <div class="device-summary">
-              <span><i class="summary-dot online"></i><strong id="onlineCount">6</strong> 在线</span>
-              <span><i class="summary-dot active"></i><strong id="activeCount">4</strong> 运行中</span>
+              <span><i class="summary-dot online"></i><strong id="onlineCount">0</strong> 在线</span>
+              <span><i class="summary-dot active"></i><strong id="activeCount">0</strong> 运行中</span>
             </div>
           </div>
           <div class="device-grid" id="deviceGrid"></div>
         </section>
 
         <footer class="page-footer">
-          <span>栖居 OS · 所有设备状态已于刚刚同步</span>
-          <span>Demo Mode</span>
+          <span>栖居 OS · 设备状态来自 backend-core</span>
+          <span>Live API Mode</span>
         </footer>
       </main>
     </div>
@@ -303,6 +299,6 @@
 
     <div class="toast-region" id="toastRegion" aria-live="polite"></div>
 
-    <script src="./app.js"></script>
+    <script src="./app.js?v=20260622-scroll-fix"></script>
   </body>
 </html>
