@@ -404,7 +404,9 @@ async def _transcribe_websocket(audio_pcm: bytes) -> dict:
                                 return 0.0
 
                             best = max(word_info["cw"], key=_word_score)
-                            final_text += best.get("w", "")
+                            word_text = best.get("w", "")
+                            if word_text:
+                                final_text += word_text
                             confidence_sum += _word_score(best)
                             confidence_count += 1
 

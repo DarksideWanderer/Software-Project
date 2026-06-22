@@ -13,7 +13,7 @@ import time
 import uuid
 from typing import Optional, Union
 
-from fastapi import APIRouter, File, Form, Request, UploadFile, status
+from fastapi import APIRouter, File, Form, UploadFile, status
 from fastapi.responses import JSONResponse
 
 from . import iflytek_engine
@@ -233,12 +233,13 @@ def _mock_transcribe(audio_bytes: bytes) -> dict:
     """Mock ASR 引擎：返回模拟转写结果。
 
     在真实部署时，替换为 Whisper / FunASR 调用。
+    使用时间+数据混合种子避免每次返回相同结果。
     """
-    # 使用音频字节的哈希值选择稳定的模拟结果
+    import time as _time
     seed = sum(
         audio_bytes[i]
         for i in range(0, len(audio_bytes), max(1, len(audio_bytes) // 64))
-    )
+    ) + int(_time.time() * 1000) % 10000
     idx = seed % len(_MOCK_TRANSCRIPTS)
     text = _MOCK_TRANSCRIPTS[idx]
 
@@ -281,7 +282,6 @@ async def health():
     },
 )
 async def transcribe_audio(
-    request: Request,
     audio: UploadFile = File(..., description="浏览器录制的音频文件"),
     language: Optional[str] = Form(default="zh-CN", description="音频语言，默认 zh-CN"),
     request_id: Optional[str] = Form(default=None, description="请求追踪 ID"),

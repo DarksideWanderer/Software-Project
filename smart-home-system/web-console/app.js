@@ -1,4 +1,5 @@
-const API_BASE = window.SMART_HOME_API_BASE || "http://127.0.0.1:8000/api/v1";
+// 前后端同源部署：API 用相对路径。FRP 只穿透 backend-core 一个端口即可。
+const API_BASE = window.SMART_HOME_API_BASE || "/api/v1";
 
 const dom = {
   deviceGrid: document.querySelector("#deviceGrid"),
@@ -398,6 +399,10 @@ async function startRecording() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     audioContext = new AudioContext();
+    // ★ 关键：现代浏览器 AudioContext 默认暂停，必须手动 resume
+    if (audioContext.state === "suspended") {
+      await audioContext.resume();
+    }
     source = audioContext.createMediaStreamSource(stream);
     processor = audioContext.createScriptProcessor(4096, 1, 1);
     const chunks = [];
@@ -448,6 +453,13 @@ async function finishRecording() {
   stream.getTracks().forEach((track) => track.stop());
   await audioContext.close();
   recordingSession = null;
+
+  if (!chunks.length) {
+    dom.assistantStatus.textContent = "栖居智能助手";
+    addMessage("未捕获到音频，请检查麦克风权限后重试。", "assistant");
+    showToast("录音失败：未捕获到音频数据");
+    return;
+  }
 
   const wavBlob = encodeWav(chunks, sampleRate);
   dom.assistantStatus.textContent = "栖居智能助手";
