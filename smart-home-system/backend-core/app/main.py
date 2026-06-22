@@ -1,10 +1,15 @@
 import asyncio
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .api.v1 import router as api_v1_router
 from .core.device_simulator import hub
+
+# web-console 静态文件路径（相对于 backend-core 目录）
+WEB_CONSOLE_DIR = Path(__file__).resolve().parent.parent.parent / "web-console"
 
 
 @asynccontextmanager
@@ -24,13 +29,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "null",
-        "http://127.0.0.1:4173",
-        "http://localhost:4173",
-        "http://127.0.0.1:8000",
-        "http://localhost:8000",
-    ],
+    allow_origins=["*"],  # 开发/演示阶段允许所有来源；生产环境请改为具体域名
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -42,25 +41,11 @@ async def health():
     return {"status": "ok", "devices": len(hub._devices)}
 
 
-@app.get("/", tags=["System"])
-async def root():
-    return {
-        "service": "backend-core",
-        "status": "ok",
-        "message": "Smart Home Backend is running. Open /docs for API docs or /api/v1/dashboard for the course demo data.",
-        "endpoints": {
-            "docs": "/docs",
-            "health": "/health",
-            "dashboard": "/api/v1/dashboard",
-            "devices": "/api/v1/devices",
-            "scenes": "/api/v1/scenes",
-            "assistant_text": "/api/v1/assistant/messages",
-            "assistant_voice": "/api/v1/assistant/voice",
-        },
-    }
-
-
 app.include_router(api_v1_router, prefix="/api/v1")
+
+# ★ 托管 web-console 静态文件（必须在路由注册之后，否则会覆盖 API 路由）
+if WEB_CONSOLE_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=str(WEB_CONSOLE_DIR), html=True), name="web-console")
 
 
 if __name__ == "__main__":

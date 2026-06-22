@@ -426,9 +426,16 @@ async def transcribe_audio(audio: UploadFile, language: str = "zh-CN") -> dict[s
             response.raise_for_status()
             return response.json()
     except httpx.HTTPError as exc:
+        # 打印 ai-service 返回的具体错误内容，方便排查
+        body = ""
+        if hasattr(exc, "response") and exc.response is not None:
+            try:
+                body = exc.response.text[:500]
+            except Exception:
+                body = "(无法读取响应体)"
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"AI ASR service unavailable: {exc}",
+            detail=f"AI ASR service unavailable: {exc}. Response body: {body}",
         ) from exc
 
 
