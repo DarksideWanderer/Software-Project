@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import uuid
 from typing import Any
@@ -11,6 +12,9 @@ from ..core.device_simulator import hub
 
 
 AI_SERVICE_BASE_URL = os.getenv("AI_SERVICE_BASE_URL", "http://127.0.0.1:8001").rstrip("/")
+TTS_AUDIO_PROXY_PREFIX = "/api/v1/audio/tts"
+
+logger = logging.getLogger(__name__)
 
 DEVICE_CATALOG: dict[str, dict[str, Any]] = {
     "ac-001": {
@@ -361,6 +365,48 @@ async def call_nlu(text: str, conversation: list[dict[str, Any]] | None = None) 
         ) from exc
 
 
+def _normalize_tts_speech(tts_response: dict[str, Any]) -> dict[str, Any] | None:
+    if tts_response.get("status") != "success":
+        return None
+
+    audio_url = tts_response.get("audio_url")
+    if not isinstance(audio_url, str) or not audio_url:
+        return None
+
+    if audio_url.startswith(("http://", "https://")):
+        speech_url = audio_url
+    elif audio_url.startswith(("/internal/v1/tts/audio/", "/ai/tts/audio/")):
+        speech_url = f"{TTS_AUDIO_PROXY_PREFIX}/{audio_url.rstrip('/').rsplit('/', 1)[-1]}"
+    else:
+        speech_url = audio_url
+
+    speech = {
+        "url": speech_url,
+        "content_type": tts_response.get("content_type") or "audio/mpeg",
+    }
+    if tts_response.get("expires_at"):
+        speech["expires_at"] = tts_response["expires_at"]
+    return speech
+
+
+async def synthesize_reply_speech(reply: str) -> dict[str, Any] | None:
+    text = reply.strip()
+    if not text:
+        return None
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                f"{AI_SERVICE_BASE_URL}/internal/v1/tts/speech",
+                json={"text": text, "voice": "default", "format": "mp3"},
+            )
+            response.raise_for_status()
+            return _normalize_tts_speech(response.json())
+    except Exception as exc:
+        logger.warning("AI TTS service unavailable: %s", exc)
+        return None
+
+
 async def execute_assistant_text(text: str, conversation: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     text = text.strip()
     if not text:
@@ -392,7 +438,13 @@ async def execute_assistant_text(text: str, conversation: list[dict[str, Any]] |
     if nlu.get("understood") and results and not command_success:
         reply = f"{reply} 但有设备尚未连接，请确认模拟器已启动。"
 
-    return {
+    try:
+        speech = await synthesize_reply_speech(reply)
+    except Exception as exc:
+        logger.warning("AI TTS synthesis skipped: %s", exc)
+        speech = None
+
+    payload = {
         "request_id": str(uuid.uuid4()),
         "understood": bool(nlu.get("understood")),
         "text": text,
@@ -401,6 +453,9 @@ async def execute_assistant_text(text: str, conversation: list[dict[str, Any]] |
         "results": results,
         "devices": await list_devices(),
     }
+    if speech:
+        payload["speech"] = speech
+    return payload
 
 
 async def transcribe_audio(audio: UploadFile, language: str = "zh-CN") -> dict[str, Any]:

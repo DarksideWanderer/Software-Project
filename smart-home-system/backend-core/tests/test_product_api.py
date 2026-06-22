@@ -10,6 +10,14 @@ async def _client():
     return AsyncClient(transport=transport, base_url="http://test")
 
 
+@pytest.fixture(autouse=True)
+def disable_tts_by_default(monkeypatch):
+    async def fake_synthesize_reply_speech(reply):
+        return None
+
+    monkeypatch.setattr(home_orchestrator, "synthesize_reply_speech", fake_synthesize_reply_speech)
+
+
 @pytest.mark.asyncio
 async def test_root_explains_backend_entrypoints():
     async with await _client() as client:
@@ -128,6 +136,63 @@ async def test_assistant_message_accepts_message_alias(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_assistant_message_includes_tts_speech(monkeypatch):
+    async def fake_call_nlu(text, conversation=None):
+        return {
+            "understood": True,
+            "reply": "好的，客厅主灯已打开。",
+            "actions": [],
+        }
+
+    async def fake_synthesize_reply_speech(reply):
+        assert reply == "好的，客厅主灯已打开。"
+        return {
+            "url": "/api/v1/audio/tts/demo.wav",
+            "content_type": "audio/wav",
+            "expires_at": "2026-06-22T20:30:00+08:00",
+        }
+
+    monkeypatch.setattr(home_orchestrator, "call_nlu", fake_call_nlu)
+    monkeypatch.setattr(home_orchestrator, "synthesize_reply_speech", fake_synthesize_reply_speech)
+
+    async with await _client() as client:
+        resp = await client.post("/api/v1/assistant/messages", json={"text": "打开客厅灯"})
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["reply"] == "好的，客厅主灯已打开。"
+    assert body["speech"] == {
+        "url": "/api/v1/audio/tts/demo.wav",
+        "content_type": "audio/wav",
+        "expires_at": "2026-06-22T20:30:00+08:00",
+    }
+
+
+@pytest.mark.asyncio
+async def test_assistant_message_ignores_tts_failure(monkeypatch):
+    async def fake_call_nlu(text, conversation=None):
+        return {
+            "understood": True,
+            "reply": "好的，正在处理。",
+            "actions": [],
+        }
+
+    async def fake_synthesize_reply_speech(reply):
+        raise RuntimeError("tts down")
+
+    monkeypatch.setattr(home_orchestrator, "call_nlu", fake_call_nlu)
+    monkeypatch.setattr(home_orchestrator, "synthesize_reply_speech", fake_synthesize_reply_speech)
+
+    async with await _client() as client:
+        resp = await client.post("/api/v1/assistant/messages", json={"text": "打开客厅灯"})
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["reply"] == "好的，正在处理。"
+    assert "speech" not in body
+
+
+@pytest.mark.asyncio
 async def test_assistant_voice_reuses_text_flow(monkeypatch):
     async def fake_transcribe_audio(audio, language="zh-CN"):
         return {"text": "打开客厅灯", "language": language, "confidence": 0.9}
@@ -154,3 +219,51 @@ async def test_assistant_voice_reuses_text_flow(monkeypatch):
     body = resp.json()
     assert body["transcript"]["text"] == "打开客厅灯"
     assert body["actions"][0]["device_id"] == "light-001"
+
+
+@pytest.mark.asyncio
+async def test_assistant_voice_includes_tts_speech(monkeypatch):
+    async def fake_transcribe_audio(audio, language="zh-CN"):
+        return {"text": "打开客厅灯", "language": language, "confidence": 0.9}
+
+    async def fake_call_nlu(text, conversation=None):
+        return {
+            "understood": True,
+            "reply": "好的，正在处理客厅主灯。",
+            "actions": [],
+        }
+
+    async def fake_synthesize_reply_speech(reply):
+        return {"url": "/api/v1/audio/tts/voice.wav", "content_type": "audio/wav"}
+
+    monkeypatch.setattr(home_orchestrator, "transcribe_audio", fake_transcribe_audio)
+    monkeypatch.setattr(home_orchestrator, "call_nlu", fake_call_nlu)
+    monkeypatch.setattr(home_orchestrator, "synthesize_reply_speech", fake_synthesize_reply_speech)
+
+    async with await _client() as client:
+        resp = await client.post(
+            "/api/v1/assistant/voice",
+            files={"audio": ("recording.wav", b"0" * 512, "audio/wav")},
+        )
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["transcript"]["text"] == "打开客厅灯"
+    assert body["speech"]["url"] == "/api/v1/audio/tts/voice.wav"
+
+
+def test_tts_relative_audio_url_uses_backend_proxy():
+    speech = home_orchestrator._normalize_tts_speech(
+        {
+            "status": "success",
+            "audio_url": "/internal/v1/tts/audio/local-file.wav",
+            "content_type": "audio/wav",
+            "expires_at": "2026-06-22T20:30:00+08:00",
+        }
+    )
+
+    assert speech == {
+        "url": "/api/v1/audio/tts/local-file.wav",
+        "content_type": "audio/wav",
+        "expires_at": "2026-06-22T20:30:00+08:00",
+    }

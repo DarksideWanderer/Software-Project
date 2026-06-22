@@ -7,8 +7,8 @@
 - 三设备 MVP：中央空调、客厅主灯、智能电视。
 - 设备卡片、详情抽屉、开关和参数控制均读取真实后端状态。
 - 回家、观影、离家三个场景由后端编排并执行设备命令。
-- 文本助手调用 `backend-core -> ai-service NLU -> DeviceHub`。
-- 浏览器录音会编码为 WAV 并上传 `POST /api/v1/assistant/voice`。
+- 文本助手调用 `backend-core -> ai-service NLU -> DeviceHub`，并消费 backend-core 返回的 TTS 回复音频。
+- 浏览器录音会编码为 WAV 并上传 `POST /api/v1/assistant/voice`，语音回复仍只从 backend-core 读取。
 - API 不可用或设备模拟器未连接时显示明确失败提示。
 
 ## 本地运行

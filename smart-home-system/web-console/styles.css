@@ -1222,8 +1222,12 @@ svg {
   font-weight: 700;
 }
 
-.message p {
+.message-content {
   max-width: 282px;
+}
+
+.message p {
+  max-width: 100%;
   margin: 0;
   padding: 11px 13px;
   border-radius: 5px 15px 15px 15px;
@@ -1232,6 +1236,50 @@ svg {
   box-shadow: 0 5px 16px rgba(39, 58, 49, 0.06);
   line-height: 1.55;
   font-size: 12px;
+}
+
+.speech-button {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 700;
+  transition: 160ms ease;
+}
+
+.speech-button:hover {
+  color: var(--green);
+  border-color: rgba(52, 117, 94, 0.22);
+  background: white;
+}
+
+.speech-button svg {
+  width: 13px;
+  height: 13px;
+}
+
+.speech-button[data-state="playing"] {
+  color: var(--green);
+  background: var(--mint);
+}
+
+.speech-button[data-state="loading"] {
+  cursor: progress;
+  opacity: 0.72;
+}
+
+.speech-button[data-state="failed"] {
+  color: var(--danger);
+  border-color: rgba(214, 91, 84, 0.24);
+  background: #fff4f3;
 }
 
 .message time {
@@ -1243,6 +1291,12 @@ svg {
 
 .user-message {
   flex-direction: row-reverse;
+}
+
+.user-message .message-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .user-message p {

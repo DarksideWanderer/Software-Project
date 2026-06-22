@@ -25,6 +25,7 @@ let activeDeviceId = null;
 let isRecording = false;
 let recordingTimer = null;
 let recordingSession = null;
+let activeSpeechPlayback = null;
 
 function iconMarkup(icon) {
   return `<svg aria-hidden="true"><use href="#${icon}"></use></svg>`;
@@ -34,6 +35,98 @@ function escapeHtml(text) {
   const element = document.createElement("div");
   element.textContent = text;
   return element.innerHTML;
+}
+
+function normalizeSpeech(speech) {
+  if (!speech?.url) return null;
+  const rawUrl = String(speech.url);
+  let url;
+  if (/^https?:\/\//i.test(rawUrl)) {
+    url = rawUrl;
+  } else if (rawUrl.startsWith("/")) {
+    url = `${new URL(API_BASE, window.location.origin).origin}${rawUrl}`;
+  } else {
+    url = new URL(`${API_BASE.replace(/\/$/, "")}/${rawUrl.replace(/^\/+/, "")}`, window.location.origin).toString();
+  }
+  return {
+    url,
+    contentType: speech.content_type || "audio/mpeg",
+  };
+}
+
+function setSpeechButtonState(button, state, label) {
+  button.dataset.state = state;
+  button.querySelector("span").textContent = label;
+  button.setAttribute("aria-label", `${label}语音回复`);
+}
+
+function stopActiveSpeech(exceptButton = null) {
+  if (!activeSpeechPlayback || activeSpeechPlayback.button === exceptButton) return;
+  activeSpeechPlayback.audio.pause();
+  activeSpeechPlayback.audio.currentTime = 0;
+  setSpeechButtonState(activeSpeechPlayback.button, "ready", "播放");
+  activeSpeechPlayback = null;
+}
+
+function getSpeechAudio(button, speech) {
+  if (button.speechAudio) return button.speechAudio;
+
+  const audio = new Audio(speech.url);
+  audio.preload = "none";
+  audio.addEventListener("ended", () => {
+    if (activeSpeechPlayback?.button === button) {
+      activeSpeechPlayback = null;
+    }
+    setSpeechButtonState(button, "ready", "播放");
+  });
+  audio.addEventListener("error", () => {
+    if (activeSpeechPlayback?.button === button) {
+      activeSpeechPlayback = null;
+    }
+    setSpeechButtonState(button, "failed", "重试");
+  });
+  button.speechAudio = audio;
+  return audio;
+}
+
+async function playSpeech(button, speech, options = {}) {
+  const audio = getSpeechAudio(button, speech);
+  if (button.dataset.state === "playing") {
+    audio.pause();
+    setSpeechButtonState(button, "ready", "播放");
+    activeSpeechPlayback = null;
+    return;
+  }
+
+  stopActiveSpeech(button);
+  if (button.dataset.state === "failed" || audio.ended) {
+    audio.currentTime = 0;
+  }
+
+  setSpeechButtonState(button, "loading", "准备");
+  try {
+    await audio.play();
+    activeSpeechPlayback = { button, audio };
+    setSpeechButtonState(button, "playing", "暂停");
+  } catch (error) {
+    if (options.autoplay) {
+      setSpeechButtonState(button, "ready", "播放");
+      showToast("浏览器阻止自动播放，可点击播放语音回复");
+      return;
+    }
+    setSpeechButtonState(button, "failed", "重试");
+    showToast("语音播放失败，请稍后重试");
+  }
+}
+
+function attachSpeechPlayback(message, speech, autoplay = true) {
+  const button = message.querySelector(".speech-button");
+  if (!button) return;
+
+  button.addEventListener("click", () => playSpeech(button, speech));
+  if (autoplay) {
+    window.setTimeout(() => playSpeech(button, speech, { autoplay: true }), 120);
+  }
 }
 
 async function apiRequest(path, options = {}) {
@@ -309,18 +402,30 @@ function closeChat() {
   dom.assistantWrap.classList.remove("chat-open");
 }
 
-function addMessage(text, sender) {
+function addMessage(text, sender, options = {}) {
+  const speech = sender === "assistant" ? normalizeSpeech(options.speech) : null;
+  const speechMarkup = speech
+    ? `<button class="speech-button" type="button" data-state="ready" aria-label="播放语音回复" title="播放语音回复">
+        ${iconMarkup("icon-volume")}
+        <span>播放</span>
+      </button>`
+    : "";
   const message = document.createElement("div");
   message.className = `message ${sender === "user" ? "user-message" : "assistant-message"}`;
   message.innerHTML = `
     ${sender === "assistant" ? '<span class="message-avatar">栖</span>' : ""}
-    <div>
+    <div class="message-content">
       <p>${escapeHtml(text)}</p>
+      ${speechMarkup}
       <time>现在</time>
     </div>
   `;
   dom.messages.appendChild(message);
   dom.messages.scrollTop = dom.messages.scrollHeight;
+  if (speech) {
+    attachSpeechPlayback(message, speech, options.autoplay !== false);
+  }
+  return message;
 }
 
 function showTyping() {
@@ -333,6 +438,12 @@ function showTyping() {
   `;
   dom.messages.appendChild(typing);
   dom.messages.scrollTop = dom.messages.scrollHeight;
+}
+
+function handleAssistantResponse(response, fallbackText) {
+  document.querySelector("#typingMessage")?.remove();
+  updateDeviceFromResponse(response);
+  addMessage(response.reply || fallbackText, "assistant", { speech: response.speech });
 }
 
 async function sendCommand(command) {
@@ -349,9 +460,7 @@ async function sendCommand(command) {
       method: "POST",
       body: JSON.stringify({ text: trimmed }),
     });
-    document.querySelector("#typingMessage")?.remove();
-    updateDeviceFromResponse(response);
-    addMessage(response.reply || "指令已处理。", "assistant");
+    handleAssistantResponse(response, "指令已处理。");
   } catch (error) {
     document.querySelector("#typingMessage")?.remove();
     addMessage(`我没能完成这次操作：${error.message}`, "assistant");
@@ -373,8 +482,7 @@ async function sendVoiceBlob(blob) {
     document.querySelector("#typingMessage")?.remove();
     const transcript = response.transcript?.text || "语音指令";
     addMessage(transcript, "user");
-    updateDeviceFromResponse(response);
-    addMessage(response.reply || "语音指令已处理。", "assistant");
+    handleAssistantResponse(response, "语音指令已处理。");
   } catch (error) {
     document.querySelector("#typingMessage")?.remove();
     addMessage(`语音识别失败：${error.message}`, "assistant");
