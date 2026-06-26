@@ -72,7 +72,12 @@ class DeviceHub:
         if not conn:
             return {"success": False, "message": f"Device {device_id} not connected"}
 
-        payload = json.dumps({"command": command, "params": params or {}})
+        # HubClient uses a deliberately small JSON parser and reads command
+        # arguments from top-level string fields, so flatten params here.
+        payload = json.dumps({
+            "command": command,
+            **{key: str(value) for key, value in (params or {}).items()},
+        })
         resp = await conn.send_recv(payload)
         try:
             return json.loads(resp)
