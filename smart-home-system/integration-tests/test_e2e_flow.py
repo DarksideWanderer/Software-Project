@@ -8,7 +8,7 @@
 
 运行方式:
   cd smart-home-system
-  python -m pytest tests/integration/test_e2e_flow.py -v
+  python -m pytest integration-tests/test_e2e_flow.py -v
 
 前置条件:
   - backend-core 运行在 :8000
@@ -31,7 +31,7 @@ import httpx
 import pytest
 
 # 项目根路径
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BACKEND_CORE_DIR = PROJECT_ROOT / "backend-core"
 AI_SERVICE_DIR = PROJECT_ROOT / "ai-service"
 SIMULATOR_DIR = PROJECT_ROOT / "device-simulator"

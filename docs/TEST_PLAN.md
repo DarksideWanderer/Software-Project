@@ -203,9 +203,9 @@ flowchart TB
 | `device-simulator/tests/CMakeLists.txt` | GTest 构建配置 | CMake | — | ✅ |
 | `web-console/tests/test_app.test.js` | 前端逻辑 | Jest | 12 | ✅ |
 | `web-console/jest.config.js` | Jest 配置 | — | — | ✅ |
-| `tests/integration/test_e2e_flow.py` | 端到端流程 | pytest | 11 | ✅ |
-| `tests/generate_test_data.py` | 测试数据生成器 | Python | — | ✅ |
-| `tests/generate_final_report.py` | 综合报告生成器 | Python | — | ✅ |
+| `smart-home-system/integration-tests/test_e2e_flow.py` | 端到端流程 | pytest | 11 | ✅ |
+| `docs/test-results/*.json` | 历史测试数据归档 | JSON | — | ✅ |
+| `docs/test-results/*.xml` | JUnit 测试结果归档 | XML | — | ✅ |
 
 ### 5.2 执行顺序
 
@@ -213,7 +213,7 @@ flowchart TB
 2. ✅ 再执行集成测试 (L2): API + E2E
 3. ✅ 编译运行 C++ GTest (device-simulator)
 4. ✅ 运行 Jest 前端测试 (web-console)
-5. ✅ 运行测试数据生成器收集 log
+5. ✅ 将测试日志、JUnit XML 和测试数据归档到 `docs/test-results/`
 
 ---
 
@@ -224,15 +224,15 @@ flowchart TB
 ```bash
 # backend-core (93 tests)
 cd backend-core && .venv/bin/python -m pytest tests/ -v --tb=long \
-    --junitxml=../docs/backend_core_results.xml | tee ../docs/backend_core_full.log
+    --junitxml=../../docs/test-results/backend_core_results.xml | tee ../../docs/test-results/backend_core_full.log
 
 # ai-service (48 tests)
 cd ai-service && ../backend-core/.venv/bin/python -m pytest tests/ -v --tb=long \
-    --junitxml=../docs/ai_service_results.xml | tee ../docs/ai_service_full.log
+    --junitxml=../../docs/test-results/ai_service_results.xml | tee ../../docs/test-results/ai_service_full.log
 
 # integration (11 tests)
-.venv/bin/python -m pytest tests/integration/ -v --tb=long \
-    --junitxml=docs/integration_results.xml | tee docs/integration_full.log
+.venv/bin/python -m pytest integration-tests/ -v --tb=long \
+    --junitxml=../docs/test-results/integration_results.xml | tee ../docs/test-results/integration_full.log
 ```
 
 ### 6.2 执行统计
@@ -272,17 +272,17 @@ pie title 测试结果分布 (152 cases)
 
 | 文件 | 大小 | 说明 |
 |------|------|------|
-| `docs/home_state.json` | 4.9 KB | 12 设备 + 2 场景标准测试数据 |
-| `docs/nlu_test_cases.json` | 3.2 KB | 10 个 NLU 测试用例 |
-| `docs/device_command_test_data.json` | 1.5 KB | 11 个设备命令用例 |
-| `docs/edge_cases.json` | 1.2 KB | 边界条件+冲突测试数据 |
-| `docs/backend_core_full.log` | 11 KB | backend-core 详细运行日志 |
-| `docs/ai_service_full.log` | 5.7 KB | ai-service 详细运行日志 |
-| `docs/integration_full.log` | 3.9 KB | 集成测试详细运行日志 |
-| `docs/backend_core_results.xml` | 11 KB | JUnit XML (CI 可解析) |
-| `docs/ai_service_results.xml` | 5.4 KB | JUnit XML |
-| `docs/integration_results.xml` | 1.6 KB | JUnit XML |
-| `docs/final_test_report.md` | 18 KB | 综合测试报告（含详情） |
+| `docs/test-results/home_state.json` | 4.9 KB | 12 设备 + 2 场景标准测试数据 |
+| `docs/test-results/nlu_test_cases.json` | 3.2 KB | 10 个 NLU 测试用例 |
+| `docs/test-results/device_command_test_data.json` | 1.5 KB | 11 个设备命令用例 |
+| `docs/test-results/edge_cases.json` | 1.2 KB | 边界条件+冲突测试数据 |
+| `docs/test-results/backend_core_full.log` | 11 KB | backend-core 详细运行日志 |
+| `docs/test-results/ai_service_full.log` | 5.7 KB | ai-service 详细运行日志 |
+| `docs/test-results/integration_full.log` | 3.9 KB | 集成测试详细运行日志 |
+| `docs/test-results/backend_core_results.xml` | 11 KB | JUnit XML (CI 可解析) |
+| `docs/test-results/ai_service_results.xml` | 5.4 KB | JUnit XML |
+| `docs/test-results/integration_results.xml` | 1.6 KB | JUnit XML |
+| `docs/综合测试报告.md` | 18 KB | 综合测试报告（含详情） |
 
 ### 6.5 待完成项
 

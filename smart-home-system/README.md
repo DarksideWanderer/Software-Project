@@ -34,7 +34,7 @@ The browser only talks to `backend-core`. API keys and AI provider configuration
 - Device name, room, cached state and user scenes survive page refresh.
 - Offline devices are labeled offline and cannot be controlled, but can still be edited or removed.
 - ID/type conflicts are detected and blocked.
-- Built-in scenes: home, movie and away.
+- Built-in scenes include home, movie and away.
 - User scenes can be created by rules or natural language.
 - Text and voice assistant commands are parsed by `ai-service` and executed by `backend-core`.
 
