@@ -1,0 +1,44 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/pokemon_song/Software-Project/smart-home-system/backend-core/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/pokemon_song/Software-Project/smart-home-system
+plugins: asyncio-1.4.0, anyio-4.13.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 11 items
+
+tests/integration/test_e2e_flow.py::TestDeviceFlowHTTP::test_full_device_lifecycle PASSED [  9%]
+tests/integration/test_e2e_flow.py::TestDeviceFlowHTTP::test_duplicate_binding_rejected PASSED [ 18%]
+tests/integration/test_e2e_flow.py::TestDeviceFlowHTTP::test_control_offline_device PASSED [ 27%]
+tests/integration/test_e2e_flow.py::TestDeviceFlowHTTP::test_parameter_validation PASSED [ 36%]
+tests/integration/test_e2e_flow.py::TestSceneFlowHTTP::test_list_scenes_includes_builtins PASSED [ 45%]
+tests/integration/test_e2e_flow.py::TestSceneFlowHTTP::test_create_and_execute_scene PASSED [ 54%]
+tests/integration/test_e2e_flow.py::TestSceneFlowHTTP::test_delete_builtin_scene_fails PASSED [ 63%]
+tests/integration/test_e2e_flow.py::TestSceneFlowHTTP::test_execute_nonexistent_scene_fails PASSED [ 72%]
+tests/integration/test_e2e_flow.py::TestDashboardFlowHTTP::test_dashboard_empty_state PASSED [ 81%]
+tests/integration/test_e2e_flow.py::TestAssistantFlowHTTP::test_empty_text_rejected PASSED [ 90%]
+tests/integration/test_e2e_flow.py::TestAssistantFlowHTTP::test_text_assistant_without_ai PASSED [100%]
+
+=============================== warnings summary ===============================
+tests/integration/test_e2e_flow.py::TestDeviceFlowHTTP::test_full_device_lifecycle
+  /home/pokemon_song/Software-Project/smart-home-system/backend-core/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/integration/test_e2e_flow.py::TestSceneFlowHTTP::test_create_and_execute_scene
+tests/integration/test_e2e_flow.py::TestSceneFlowHTTP::test_create_and_execute_scene
+  /home/pokemon_song/Software-Project/smart-home-system/backend-core/app/api/v1/scenes.py:37: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.13/migration/
+    commands=[cmd.dict() for cmd in req.commands],
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/integration_results.xml -
+============================= slowest 10 durations =============================
+15.06s call     tests/integration/test_e2e_flow.py::TestAssistantFlowHTTP::test_text_assistant_without_ai
+0.27s setup    tests/integration/test_e2e_flow.py::TestDeviceFlowHTTP::test_full_device_lifecycle
+0.03s call     tests/integration/test_e2e_flow.py::TestDeviceFlowHTTP::test_full_device_lifecycle
+0.01s setup    tests/integration/test_e2e_flow.py::TestSceneFlowHTTP::test_list_scenes_includes_builtins
+0.01s setup    tests/integration/test_e2e_flow.py::TestSceneFlowHTTP::test_create_and_execute_scene
+0.01s setup    tests/integration/test_e2e_flow.py::TestSceneFlowHTTP::test_execute_nonexistent_scene_fails
+0.01s setup    tests/integration/test_e2e_flow.py::TestSceneFlowHTTP::test_delete_builtin_scene_fails
+0.01s call     tests/integration/test_e2e_flow.py::TestSceneFlowHTTP::test_create_and_execute_scene
+0.01s call     tests/integration/test_e2e_flow.py::TestDeviceFlowHTTP::test_parameter_validation
+0.01s call     tests/integration/test_e2e_flow.py::TestDeviceFlowHTTP::test_control_offline_device
+======================= 11 passed, 3 warnings in 15.54s ========================
