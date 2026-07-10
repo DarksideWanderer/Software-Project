@@ -1,113 +1,106 @@
-# Sprint 1 阶段计划文档 (已调整 - 简化版)
+# Sprint 1 - 项目基础架构与 API 契约完善
 
-**周期**：2026年5月20日 - 2026年5月27日（1周）
-**核心目标**：攻克 FastAPI 后端基础架构，完成全项目的目录分层设计与空框架（Skeleton）搭建。
+**时间范围**：第 1 个迭代周期（1 周）
+**Sprint Goal**：确认 `web-console -> backend-core -> ai-service / DeviceHub -> device-simulator` 的真实架构，建立 API、设备模型、AI 内部接口和本地联调基础。
 
----
+## 1. 背景与范围
 
-## 1. 主要目标 (Main Goals)
+本阶段以 `backend-core` FastAPI 为统一入口，浏览器只访问 `/api/v1`；`ai-service` 提供内部 ASR/NLU/TTS 接口；C++ `device-simulator` 通过 TCP 连接 `DeviceHub` 并注册设备能力。Sprint 1 的重点是确定这些模块之间的通信方式、API 契约和基础数据模型，为后续业务功能开发提供稳定基础。
 
-1.  **FastAPI 实装**：完成 `backend-core` 的基础路由搭建，实现一个简单的 `GET /health` 接口和基础的数据库连接逻辑。
-2.  **架构占位 (Skeleton)**：建立 `ai-service`、`app-mobile`、`device-simulator` 的文件夹结构，并放置最简单的程序入口（如打印 "Hello World"），暂不实现具体业务逻辑。
-3.  **环境统一**：确保 7 位同学都能在本地跑通 `pip install` 或简单的 `cmake` 流程，环境不再是障碍。
-4.  **接口草案**：在 Swagger 文档中列出未来需要的 API 列表（即便现在返回的是假数据）。
+## 2. User Stories
 
----
+| ID | User Story | 优先级 | SP | Acceptance Criteria | 负责人 |
+| --- | --- | --- | --- | --- | --- |
+| US1-1 | 作为开发人员，我希望明确前端、主后端、AI 服务和设备模拟器的服务边界，以便各模块可以并行开发。 | P0 | 5 | 文档明确 Web 只访问 `backend-core`，AI key 只在 `ai-service` 服务端保存。 | BE-1, AI-1, FE-1 |
+| US1-2 | 作为后端开发人员，我希望确定稳定的 API 前缀，以便前端后续统一对接 `/api/v1`。 | P0 | 5 | `backend-core/app/api/v1` 聚合 devices、scenes、assistant、dashboard、audio 路由。 | BE-1 |
+| US1-3 | 作为 AI 开发人员，我希望建立内部 ASR/NLU/TTS 接口，以便主后端可以安全调用 AI 能力。 | P0 | 5 | `ai-service` 提供 `/internal/health`、ASR、NLU、TTS 内部接口。 | AI-1, AI-2 |
+| US1-4 | 作为设备模拟器开发人员，我希望模拟设备能够注册自身能力，以便后端可以根据能力转发命令。 | P0 | 8 | C++ simulator 连接 `DeviceHub :9760` 并发送 register JSON。 | BE-2 |
+| US1-5 | 作为前端开发人员，我希望先建立可运行的 Web 页面骨架，以便后续迭代承载设备、场景和助手功能。 | P1 | 3 | `web-console` 可静态访问，预留设备卡片、场景和助手区域。 | FE-1, FE-2 |
 
-## 2. 系统 UML 文档 (UML Design)
-*(注：本阶段仅作为长远规划参考，Sprint 1 仅需实现 API 节点的连通)*
+## 3. Product Backlog Items
 
-### 2.1 整体架构图 (System Architecture)
-```mermaid
-graph TD
-    User([用户]) -->|语音/UI| Mobile(Flutter App)
-    Mobile -->|HTTP/WebSocket| API(FastAPI Backend)
-    API -->|Intent| AI(AI Service)
-    AI -->|JSON Code| API
-    API <-->|MQTT| Broker[MQTT Broker]
-    Broker <-->|Status/Cmd| Devices(C++ Simulator)
-    API --- DB[(Redis/PostgreSQL)]
-```
+| PBI | 内容 | 优先级 | SP | 依赖 |
+| --- | --- | --- | --- | --- |
+| PBI1-1 | 梳理实际架构与目录职责 | P0 | 3 | 无 |
+| PBI1-2 | 建立 `backend-core` FastAPI 路由聚合与 CORS | P0 | 5 | PBI1-1 |
+| PBI1-3 | 建立 AI 内部接口骨架与健康检查 | P0 | 5 | PBI1-1 |
+| PBI1-4 | 建立 DeviceHub TCP 注册和命令协议 | P0 | 8 | PBI1-1 |
+| PBI1-5 | 明确设备、命令、场景和家庭状态基础模型 | P0 | 5 | PBI1-2, PBI1-4 |
+| PBI1-6 | 整理端口、环境变量和本地启动顺序 | P1 | 3 | PBI1-2, PBI1-3 |
 
-### 2.2 MQTT 通信序列图 (Communication Sequence)
-```mermaid
-sequenceDiagram
-    participant App as Flutter App
-    participant BE as Backend (FastAPI)
-    participant MQTT as MQTT Broker
-    participant Sim as C++ Simulator
+## 4. 具体任务拆分
 
-    App->>BE: POST /api/v1/control (Light ON)
-    BE->>MQTT: PUB smart-home/device/01/cmd {"power": "on"}
-    MQTT->>Sim: Forward Command
-    Sim->>Sim: Process Physical Logic
-    Sim-->>MQTT: PUB smart-home/device/01/stat {"status": "on"}
-    MQTT-->>BE: Status Update (Sub)
-    BE-->>App: WebSocket/Push Notification
-```
+| 任务 | 描述 | 负责人 | SP |
+| --- | --- | --- | --- |
+| T1-1 | 阅读 `Plan.md`、`ARCHITECTURE.md`、`FRONTEND_API_REQUIREMENTS.md`，整理系统边界、接口需求和模块职责。 | BE-1, AI-1, FE-1 | 2 |
+| T1-2 | 设计 `/api/v1` 路由结构，保留 devices、scenes、assistant、dashboard、audio。 | BE-1 | 3 |
+| T1-3 | 设计 AI 请求/响应模型，明确 NLU 只输出动作计划。 | AI-1, AI-2 | 5 |
+| T1-4 | 设计 DeviceHub TCP JSON 行协议和基础命令转发。 | BE-2 | 5 |
+| T1-5 | 定义设备能力字段：`id`、`type`、`commands`、`state_fields`、参数约束。 | BE-2, AI-3 | 3 |
+| T1-6 | 搭建 Web 静态入口和基础页面结构。 | FE-1, FE-2 | 3 |
+| T1-7 | 整理本地运行说明：8000、8001、9760 和 Web 静态访问。 | BE-1, AI-1, FE-1 | 2 |
 
----
+## 5. 七名成员分工
 
-## 3. 团队分工 (Team Allocation - 7人)
+| 成员 | 方向 | 本 Sprint 主要职责 |
+| --- | --- | --- |
+| AI-1 | AI | AI 服务接口边界、NLU 请求模型、内部健康检查。 |
+| AI-2 | AI | ASR/TTS 接口契约、环境变量和密钥隔离。 |
+| AI-3 | AI | 设备能力 Schema 与动作计划 Schema。 |
+| BE-1 | 后端 | FastAPI 应用入口、路由聚合、CORS 和健康检查。 |
+| BE-2 | 后端 | DeviceHub TCP 协议和 C++ simulator 通信约定。 |
+| FE-1 | 前端 | Web 控制台基础页面结构和 API 调用规划。 |
+| FE-2 | 前端 | 基础视觉布局、导航、占位卡片和联调提示。 |
 
-| 姓名 | 角色 | 本次 Sprint 核心任务 (重点：Backend 实装 + 其他模块 Skeleton) |
-| :--- | :--- | :--- |
-| **队员A** | **Scrum Master** | 更新并对齐 Rule.md，检查全员本地开发环境是否搭建成功。 |
-| **队员B** | **AI 骨架设计** | 创建 `ai-service` 文件夹，配置 `requirements.txt` 和一个空的 FastAPI 入口。 |
-| **队员C** | **后端开发 (主攻)** | 编写 `backend-core` 的主程序 `main.py`，实现基础路由分发。 |
-| **队员D** | **后端开发 (辅助)** | 配置 Dockerfile 基础镜像，尝试启动一个空的 PostgreSQL 容器。 |
-| **队员E** | **前端骨架设计** | 初始化 Flutter 项目，确保能运行起空白的“新项目首页”。 |
-| **队员F** | **C++ 骨架设计** | 创建 `device-simulator` 目录，编写最简单的 `CMakeLists.txt` 和 main.cpp。 |
-| **队员G** | **协议草案编写** | 在文档中罗列出未来 API 的输入输出字段，作为后端开发的参考。 |
+## 6. 任务优先级与工作量
 
----
+| 优先级 | 内容 | 合计 SP |
+| --- | --- | --- |
+| P0 | 服务边界、API、AI 内部接口、DeviceHub、设备模型 | 28 |
+| P1 | Web shell、运行说明、文档同步 | 8 |
+| **总计** |  | **36** |
 
-## 4. 交付物 (Deliverables)
+## 7. 依赖关系
 
-*   [ ] **Backend 接口**：本地可访问的 `http://localhost:8000/docs`（Swagger）。
-*   [ ] **全模块骨架**：README 中提到的各个子仓库文件夹均已建立且包含基础文件。
-*   [ ] **开发文档**：一份简单的“如何运行我的模块”的操作指南。
+- 前端依赖 `/api/v1` 和设备模型。
+- NLU 依赖设备能力 Schema，本阶段仅完成接口和动作结构设计。
+- C++ simulator 依赖 DeviceHub 先启动。
+- 持久化只确定方向，实际缓存放到 Sprint 3。
 
----
+## 8. Acceptance Criteria
 
-## 6. 技术名词注解 (Terms Glossary)
+- `backend-core` 能启动并提供 `/health`。
+- `ai-service` 能启动并提供 `/internal/health`。
+- DeviceHub 协议与 C++ 启动入口一致，明确当前使用 TCP 而不是 MQTT。
+- 文档明确未实现用户认证、真实数据库、WebSocket 推送和生产权限。
 
-为了帮助大二同学快速上手，这里对本项目中出现的核心技术和库进行通俗解释：
+## 9. Definition of Done
 
-### 6.1 通信与中间件
-*   **MQTT (Message Queuing Telemetry Transport)**：
-    *   **概念**：一种极轻量级的“发布/订阅”消息协议，专门为物联网（IoT）设计。
-    *   **通俗理解**：像一个“公告板”。设备往某个 Topic（话题，如 `home/light`）贴纸条（发布），后端订阅这个话题后就能看到纸条。它是智能家居设备之间交流的“公共语言”。
-*   **MQTT Broker (Mosquitto)**：
-    *   **概念**：MQTT 的服务器中心。
-    *   **通俗理解**：负责接收所有纸条并分发给订阅者的“邮局”。
-*   **WebSocket**：
-    *   **通俗理解**：一种让服务器能“主动”推数据给 App 的技术。通常网页是你不点不刷新，而 WebSocket 允许服务器在灯开了之后立马告诉 App“灯亮了”。
+- API 路径、端口和模块边界写入文档。
+- 核心字段命名在前端、后端、AI 之间保持一致。
+- Sprint 1 的交付物聚焦架构、接口、数据模型和本地联调基础。
 
-### 6.2 Python 库 (后端与 AI)
-*   **FastAPI**：
-    *   **通俗理解**：一个写 Web 接口的框架。你只需要写简单的 Python 函数，它就能自动变成一个可以通过浏览器或 App 访问的网址（API）。
-*   **Paho-MQTT**：
-    *   **通俗理解**：Python 操作 MQTT 的“遥控器”。用它来编写代码发送或接收 MQTT 消息。
-*   **SQLAlchemy / Tortoise-ORM**：
-    *   **通俗理解**：让你不用写复杂的 SQL 语句，而是像操作普通 Python 对象一样去操作数据库里的数据。
+## 10. 测试与验收方案
 
-### 6.3 C++ 库 (设备模拟)
-*   **Eclipse Paho MQTT C++**：
-    *   **通俗理解**：C++ 版的 MQTT 客户端库。让你的设备模拟器程序能够连接到 MQTT 邮局。
-*   **CMake**：
-    *   **通俗理解**：一个自动化“编译器指挥官”。它可以自动找到你电脑里的库，并生成适合当前系统的编译指令（如 Makefile 或 VS 项目文件）。
-*   **Google Test (GTest)**：
-    *   **通俗理解**：一个专门用来写“考试卷”的代码库。通过它编写测试用例，自动检查你的函数输出是否符合预期。
+- 访问 `GET /health` 检查 `backend-core`。
+- 访问 `GET /internal/health` 检查 `ai-service`。
+- 启动一个 simulator 后访问 `GET /api/v1/devices/raw`。
+- 检查 `web-console` 静态资源能加载。
 
-### 6.4 部署相关
-*   **Docker / Docker Compose**：
-    *   **通俗理解**：一种“集装箱”技术。它把数据库、邮局、代码等所有依赖打包在一起。你只需要运行一个命令，所有东西都会在它的独立环境里跑起来，不会弄乱你的电脑系统。
+## 11. Sprint Review 预期成果
 
----
+- 展示四模块架构和启动顺序。
+- 展示基础健康检查。
+- 说明后续 Sprint 以 TCP DeviceHub 和 Web 控制台为主线。
 
-## 7. 完成定义 (Definition of Done)
-1.  所有代码满足 [Rule.md](../Rule.md) 定义的风格规范。
-2.  通过静态类型检查及基础单测。
-3.  MQTT 消息能够在 Backend 与 Simulator 之间闭环传输。
-4.  PR 必须经过至少一人 Review 并签入 `develop`。
+## 12. 风险与应对
+
+| 风险 | 影响 | 应对 |
+| --- | --- | --- |
+| 模块边界理解不一致 | 后续接口对接返工 | 在 Sprint 1 固化服务边界、端口和 API 前缀。 |
+| AI 与后端动作 Schema 不一致 | NLU 输出无法执行 | AI-3 与 BE-1 共同维护设备命令约束。 |
+| Windows 编译环境差异 | 模拟器无法运行 | 说明 C++ simulator 使用 CMake 和 MSYS2/Linux 类环境。 |
+
+## 13. Sprint Retrospective
+
+本 Sprint 完成了四个核心模块的边界确认和基础联调规划。后续需要在此基础上逐步补充业务流程、状态缓存、场景系统和 AI 控制能力。
