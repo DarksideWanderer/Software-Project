@@ -1,0 +1,217 @@
+{
+  "bound_devices": {
+    "ac-003": {
+      "id": "ac-003",
+      "type": "air_conditioner",
+      "name": "客厅空调",
+      "room": "客厅",
+      "original_name": "ac-003"
+    },
+    "ac-004": {
+      "id": "ac-004",
+      "type": "air_conditioner",
+      "name": "主卧空调",
+      "room": "主卧",
+      "original_name": "ac-004"
+    },
+    "light-001": {
+      "id": "light-001",
+      "type": "light",
+      "name": "客厅主灯",
+      "room": "客厅",
+      "original_name": "light-001"
+    },
+    "light-002": {
+      "id": "light-002",
+      "type": "light",
+      "name": "卧室氛围灯",
+      "room": "卧室",
+      "original_name": "light-002"
+    },
+    "tv-001": {
+      "id": "tv-001",
+      "type": "tv",
+      "name": "客厅电视",
+      "room": "客厅",
+      "original_name": "tv-001"
+    },
+    "fridge-001": {
+      "id": "fridge-001",
+      "type": "fridge",
+      "name": "厨房冰箱",
+      "room": "厨房",
+      "original_name": "fridge-001"
+    },
+    "washer-001": {
+      "id": "washer-001",
+      "type": "washer",
+      "name": "阳台洗衣机",
+      "room": "阳台",
+      "original_name": "washer-001"
+    },
+    "heater-001": {
+      "id": "heater-001",
+      "type": "water_heater",
+      "name": "浴室热水器",
+      "room": "浴室",
+      "original_name": "heater-001"
+    },
+    "purifier-001": {
+      "id": "purifier-001",
+      "type": "air_purifier",
+      "name": "客厅净化器",
+      "room": "客厅",
+      "original_name": "purifier-001"
+    },
+    "curtain-001": {
+      "id": "curtain-001",
+      "type": "curtain",
+      "name": "卧室窗帘",
+      "room": "卧室",
+      "original_name": "curtain-001"
+    },
+    "socket-001": {
+      "id": "socket-001",
+      "type": "socket",
+      "name": "书房插座",
+      "room": "书房",
+      "original_name": "socket-001"
+    },
+    "robot-001": {
+      "id": "robot-001",
+      "type": "robot_vacuum",
+      "name": "扫地机器人",
+      "room": "全屋",
+      "original_name": "robot-001"
+    }
+  },
+  "device_states": {
+    "ac-003": {
+      "device_id": "ac-003",
+      "device_type": "air_conditioner",
+      "is_on": true,
+      "temperature": 24
+    },
+    "ac-004": {
+      "device_id": "ac-004",
+      "device_type": "air_conditioner",
+      "is_on": false,
+      "temperature": 26
+    },
+    "light-001": {
+      "device_id": "light-001",
+      "device_type": "light",
+      "is_on": true,
+      "brightness": 80,
+      "color": "daylight"
+    },
+    "light-002": {
+      "device_id": "light-002",
+      "device_type": "light",
+      "is_on": false,
+      "brightness": 50,
+      "color": "warm"
+    },
+    "tv-001": {
+      "device_id": "tv-001",
+      "device_type": "tv",
+      "is_on": true,
+      "channel": 5,
+      "volume": 35
+    },
+    "fridge-001": {
+      "device_id": "fridge-001",
+      "device_type": "fridge",
+      "is_on": true,
+      "temperature": 4
+    },
+    "washer-001": {
+      "device_id": "washer-001",
+      "device_type": "washer",
+      "is_on": false,
+      "progress": 0
+    },
+    "heater-001": {
+      "device_id": "heater-001",
+      "device_type": "water_heater",
+      "is_on": false,
+      "temperature": 45
+    },
+    "purifier-001": {
+      "device_id": "purifier-001",
+      "device_type": "air_purifier",
+      "is_on": true,
+      "speed": 3,
+      "air_quality": 42
+    },
+    "curtain-001": {
+      "device_id": "curtain-001",
+      "device_type": "curtain",
+      "is_on": true,
+      "percent": 75
+    },
+    "socket-001": {
+      "device_id": "socket-001",
+      "device_type": "socket",
+      "is_on": false
+    },
+    "robot-001": {
+      "device_id": "robot-001",
+      "device_type": "robot_vacuum",
+      "is_on": false,
+      "battery": 82
+    }
+  },
+  "user_scenes": {
+    "user-abc12345": {
+      "id": "user-abc12345",
+      "name": "晚安模式",
+      "description": "关闭客厅所有设备",
+      "commands": [
+        {
+          "device_id": "light-001",
+          "command": "turn_off",
+          "params": {}
+        },
+        {
+          "device_id": "tv-001",
+          "command": "turn_off",
+          "params": {}
+        },
+        {
+          "device_id": "ac-003",
+          "command": "turn_off",
+          "params": {}
+        }
+      ],
+      "builtin": false
+    },
+    "user-def67890": {
+      "id": "user-def67890",
+      "name": "阅读模式",
+      "description": "调暗灯光，舒适温度",
+      "commands": [
+        {
+          "device_id": "light-001",
+          "command": "turn_on",
+          "params": {}
+        },
+        {
+          "device_id": "light-001",
+          "command": "set_brightness",
+          "params": {
+            "brightness": 40
+          }
+        },
+        {
+          "device_id": "ac-003",
+          "command": "set_temperature",
+          "params": {
+            "temperature": 25
+          }
+        }
+      ],
+      "builtin": false
+    }
+  }
+}

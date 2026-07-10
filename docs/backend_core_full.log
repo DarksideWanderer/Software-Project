@@ -1,0 +1,122 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/pokemon_song/Software-Project/smart-home-system/backend-core/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/pokemon_song/Software-Project/smart-home-system/backend-core
+configfile: pytest.ini
+plugins: asyncio-1.4.0, anyio-4.13.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 93 items
+
+tests/test_api.py::TestHealthEndpoint::test_health_returns_ok PASSED     [  1%]
+tests/test_api.py::TestDashboardAPI::test_dashboard_returns_structure PASSED [  2%]
+tests/test_api.py::TestDashboardAPI::test_dashboard_summary_fields PASSED [  3%]
+tests/test_api.py::TestDevicesAPI::test_list_devices_empty PASSED        [  4%]
+tests/test_api.py::TestDevicesAPI::test_discover_devices PASSED          [  5%]
+tests/test_api.py::TestDevicesAPI::test_get_raw_devices PASSED           [  6%]
+tests/test_api.py::TestDevicesAPI::test_get_device_not_found PASSED      [  7%]
+tests/test_api.py::TestDevicesAPI::test_bind_device_validation PASSED    [  8%]
+tests/test_api.py::TestDevicesAPI::test_get_device_state PASSED          [  9%]
+tests/test_api.py::TestDevicesAPI::test_get_command_count PASSED         [ 10%]
+tests/test_api.py::TestDevicesAPI::test_get_command_schema PASSED        [ 11%]
+tests/test_api.py::TestDevicesAPI::test_execute_device_command PASSED    [ 12%]
+tests/test_api.py::TestScenesAPI::test_list_scenes PASSED                [ 13%]
+tests/test_api.py::TestScenesAPI::test_create_scene_without_devices PASSED [ 15%]
+tests/test_api.py::TestScenesAPI::test_delete_builtin_scene_fails PASSED [ 16%]
+tests/test_api.py::TestScenesAPI::test_execute_nonexistent_scene PASSED  [ 17%]
+tests/test_api.py::TestScenesAPI::test_natural_scene_requires_text PASSED [ 18%]
+tests/test_api.py::TestAssistantAPI::test_message_empty_text PASSED      [ 19%]
+tests/test_api.py::TestAssistantAPI::test_message_with_text PASSED       [ 20%]
+tests/test_api.py::TestAssistantAPI::test_voice_without_file PASSED      [ 21%]
+tests/test_api.py::TestCORS::test_cors_headers_present PASSED            [ 22%]
+tests/test_api.py::TestCORS::test_cors_on_get PASSED                     [ 23%]
+tests/test_device_hub.py::TestDeviceConnection::test_init_stores_reader_writer PASSED [ 24%]
+tests/test_device_hub.py::TestDeviceConnection::test_close_calls_writer_close PASSED [ 25%]
+tests/test_device_hub.py::TestDeviceConnection::test_send_recv_exchanges_data PASSED [ 26%]
+tests/test_device_hub.py::TestDeviceConnection::test_send_recv_handles_disconnect PASSED [ 27%]
+tests/test_device_hub.py::TestDeviceConnection::test_read_registration PASSED [ 29%]
+tests/test_device_hub.py::TestDeviceHub::test_init_creates_empty_registry PASSED [ 30%]
+tests/test_device_hub.py::TestDeviceHub::test_list_devices_empty PASSED  [ 31%]
+tests/test_device_hub.py::TestDeviceHub::test_list_devices_with_registered PASSED [ 32%]
+tests/test_device_hub.py::TestDeviceHub::test_send_command_device_not_connected PASSED [ 33%]
+tests/test_device_hub.py::TestDeviceHub::test_send_command_to_connected_device PASSED [ 34%]
+tests/test_device_hub.py::TestDeviceHub::test_send_command_handles_disconnect PASSED [ 35%]
+tests/test_device_hub.py::TestDeviceHub::test_get_command_count PASSED   [ 36%]
+tests/test_device_hub.py::TestDeviceHub::test_get_command_count_unknown_device PASSED [ 37%]
+tests/test_device_hub.py::TestDeviceHub::test_get_command_schema PASSED  [ 38%]
+tests/test_device_hub.py::TestDeviceHub::test_get_command_schema_unknown_command PASSED [ 39%]
+tests/test_device_hub.py::TestDeviceHubTCP::test_hub_host_and_port PASSED [ 40%]
+tests/test_device_hub.py::TestDeviceHubTCP::test_hub_default_port PASSED [ 41%]
+tests/test_orchestrator.py::TestStatePersistence::test_load_empty_state_when_file_missing PASSED [ 43%]
+tests/test_orchestrator.py::TestStatePersistence::test_save_and_load_state PASSED [ 44%]
+tests/test_orchestrator.py::TestStatePersistence::test_default_state_structure PASSED [ 45%]
+tests/test_orchestrator.py::TestDeviceDiscovery::test_discover_returns_empty_when_no_registry PASSED [ 46%]
+tests/test_orchestrator.py::TestDeviceDiscovery::test_discover_filters_bound_devices PASSED [ 47%]
+tests/test_orchestrator.py::TestDeviceDiscovery::test_discover_device_has_required_fields PASSED [ 48%]
+tests/test_orchestrator.py::TestDeviceBinding::test_bind_device_success PASSED [ 49%]
+tests/test_orchestrator.py::TestDeviceBinding::test_bind_duplicate_device_raises_409 PASSED [ 50%]
+tests/test_orchestrator.py::TestDeviceBinding::test_bind_offline_device_raises_404 PASSED [ 51%]
+tests/test_orchestrator.py::TestDeviceBinding::test_bind_unknown_device_raises_404 PASSED [ 52%]
+tests/test_orchestrator.py::TestDeviceUpdate::test_update_device_name PASSED [ 53%]
+tests/test_orchestrator.py::TestDeviceUpdate::test_update_device_room PASSED [ 54%]
+tests/test_orchestrator.py::TestDeviceUpdate::test_update_unbound_device_raises_404 PASSED [ 55%]
+tests/test_orchestrator.py::TestDeviceRemoval::test_remove_device_success PASSED [ 56%]
+tests/test_orchestrator.py::TestDeviceRemoval::test_remove_unbound_device_raises_404 PASSED [ 58%]
+tests/test_orchestrator.py::TestDeviceTypeMeta::test_all_device_types_have_required_fields PASSED [ 59%]
+tests/test_orchestrator.py::TestDeviceTypeMeta::test_air_conditioner_commands PASSED [ 60%]
+tests/test_orchestrator.py::TestDeviceTypeMeta::test_light_commands PASSED [ 61%]
+tests/test_orchestrator.py::TestDeviceTypeMeta::test_device_count_is_10 PASSED [ 62%]
+tests/test_orchestrator.py::TestParamCoercion::test_coerce_integer_param_in_range PASSED [ 63%]
+tests/test_orchestrator.py::TestParamCoercion::test_coerce_integer_param_clamped_max PASSED [ 64%]
+tests/test_orchestrator.py::TestParamCoercion::test_coerce_integer_param_clamped_min PASSED [ 65%]
+tests/test_orchestrator.py::TestParamCoercion::test_coerce_string_param_valid PASSED [ 66%]
+tests/test_orchestrator.py::TestParamCoercion::test_coerce_string_param_invalid_raises PASSED [ 67%]
+tests/test_orchestrator.py::TestParamCoercion::test_coerce_missing_required_param_raises PASSED [ 68%]
+tests/test_orchestrator.py::TestParamCoercion::test_coerce_unknown_command_raises PASSED [ 69%]
+tests/test_orchestrator.py::TestSceneManagement::test_list_scenes_includes_builtin PASSED [ 70%]
+tests/test_orchestrator.py::TestSceneManagement::test_builtin_scenes_have_required_fields PASSED [ 72%]
+tests/test_orchestrator.py::TestSceneManagement::test_create_scene_success PASSED [ 73%]
+tests/test_orchestrator.py::TestSceneManagement::test_create_scene_with_unbound_device_raises PASSED [ 74%]
+tests/test_orchestrator.py::TestSceneManagement::test_delete_builtin_scene_raises PASSED [ 75%]
+tests/test_orchestrator.py::TestSceneManagement::test_delete_user_scene_success PASSED [ 76%]
+tests/test_orchestrator.py::TestCommandPlanning::test_turn_on_before_params_before_turn_off PASSED [ 77%]
+tests/test_orchestrator.py::TestCommandPlanning::test_scene_action_preserves_order PASSED [ 78%]
+tests/test_orchestrator.py::TestTypeInference::test_type_from_id_ac PASSED [ 79%]
+tests/test_orchestrator.py::TestTypeInference::test_type_from_id_light PASSED [ 80%]
+tests/test_orchestrator.py::TestTypeInference::test_type_from_id_tv PASSED [ 81%]
+tests/test_orchestrator.py::TestTypeInference::test_type_from_id_fridge PASSED [ 82%]
+tests/test_orchestrator.py::TestTypeInference::test_type_from_id_washer PASSED [ 83%]
+tests/test_orchestrator.py::TestTypeInference::test_type_from_id_heater PASSED [ 84%]
+tests/test_orchestrator.py::TestTypeInference::test_type_from_id_purifier PASSED [ 86%]
+tests/test_orchestrator.py::TestTypeInference::test_type_from_id_curtain PASSED [ 87%]
+tests/test_orchestrator.py::TestTypeInference::test_type_from_id_socket PASSED [ 88%]
+tests/test_orchestrator.py::TestTypeInference::test_type_from_id_robot PASSED [ 89%]
+tests/test_orchestrator.py::TestTypeInference::test_type_from_unknown_id PASSED [ 90%]
+tests/test_schemas.py::TestCommandRequest::test_create_with_required_fields PASSED [ 91%]
+tests/test_schemas.py::TestCommandRequest::test_create_with_params PASSED [ 92%]
+tests/test_schemas.py::TestCommandRequest::test_missing_command_raises_error PASSED [ 93%]
+tests/test_schemas.py::TestCommandRequest::test_params_defaults_to_empty_dict PASSED [ 94%]
+tests/test_schemas.py::TestCommandRequest::test_command_with_complex_params PASSED [ 95%]
+tests/test_schemas.py::TestCommandResponse::test_default_values PASSED   [ 96%]
+tests/test_schemas.py::TestCommandResponse::test_success_response PASSED [ 97%]
+tests/test_schemas.py::TestCommandResponse::test_failure_response PASSED [ 98%]
+tests/test_schemas.py::TestCommandResponse::test_state_is_optional PASSED [100%]
+
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /home/pokemon_song/Software-Project/smart-home-system/backend-core/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/test_api.py::TestScenesAPI::test_create_scene_without_devices
+  /home/pokemon_song/Software-Project/smart-home-system/backend-core/app/api/v1/scenes.py:37: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.13/migration/
+    commands=[cmd.dict() for cmd in req.commands],
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/backend_core_results.xml -
+============================= slowest 10 durations =============================
+15.09s call     tests/test_api.py::TestAssistantAPI::test_message_with_text
+15.09s call     tests/test_api.py::TestScenesAPI::test_natural_scene_requires_text
+0.06s setup    tests/test_api.py::TestHealthEndpoint::test_health_returns_ok
+0.02s setup    tests/test_orchestrator.py::TestDeviceRemoval::test_remove_unbound_device_raises_404
+
+(6 durations < 0.005s hidden.  Use -vv to show these durations.)
+======================= 93 passed, 2 warnings in 30.88s ========================

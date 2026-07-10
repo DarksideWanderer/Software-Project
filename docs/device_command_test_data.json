@@ -1,0 +1,86 @@
+[
+  {
+    "device_id": "ac-003",
+    "command": "turn_on",
+    "params": {},
+    "expected_success": true
+  },
+  {
+    "device_id": "ac-003",
+    "command": "turn_off",
+    "params": {},
+    "expected_success": true
+  },
+  {
+    "device_id": "ac-003",
+    "command": "set_temperature",
+    "params": {
+      "temperature": 22
+    },
+    "expected_success": true
+  },
+  {
+    "device_id": "ac-003",
+    "command": "set_temperature",
+    "params": {
+      "temperature": 100
+    },
+    "expected_success": true,
+    "note": "clamped to 30"
+  },
+  {
+    "device_id": "ac-003",
+    "command": "set_temperature",
+    "params": {
+      "temperature": -5
+    },
+    "expected_success": true,
+    "note": "clamped to 16"
+  },
+  {
+    "device_id": "light-001",
+    "command": "turn_on",
+    "params": {},
+    "expected_success": true
+  },
+  {
+    "device_id": "light-001",
+    "command": "set_brightness",
+    "params": {
+      "brightness": 60
+    },
+    "expected_success": true
+  },
+  {
+    "device_id": "light-001",
+    "command": "set_color",
+    "params": {
+      "color": "warm"
+    },
+    "expected_success": true
+  },
+  {
+    "device_id": "tv-001",
+    "command": "set_channel",
+    "params": {
+      "channel": 8
+    },
+    "expected_success": true
+  },
+  {
+    "device_id": "tv-001",
+    "command": "set_volume",
+    "params": {
+      "volume": 45
+    },
+    "expected_success": true
+  },
+  {
+    "device_id": "curtain-001",
+    "command": "set_open_percent",
+    "params": {
+      "percent": 50
+    },
+    "expected_success": true
+  }
+]

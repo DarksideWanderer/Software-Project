@@ -1,0 +1,73 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/pokemon_song/Software-Project/smart-home-system/backend-core/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/pokemon_song/Software-Project/smart-home-system/ai-service
+configfile: pytest.ini
+plugins: asyncio-1.4.0, anyio-4.13.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 48 items
+
+tests/test_asr.py::TestASRConstants::test_max_file_size PASSED           [  2%]
+tests/test_asr.py::TestASRConstants::test_max_duration PASSED            [  4%]
+tests/test_asr.py::TestASRConstants::test_supported_mime_types PASSED    [  6%]
+tests/test_asr.py::TestASRConstants::test_mock_transcripts_not_empty PASSED [  8%]
+tests/test_asr.py::TestWAVParsing::test_parse_valid_wav_header PASSED    [ 10%]
+tests/test_asr.py::TestWAVParsing::test_parse_non_wav_data PASSED        [ 12%]
+tests/test_asr.py::TestWAVParsing::test_parse_too_short_data PASSED      [ 14%]
+tests/test_asr.py::TestErrorResponse::test_error_response_format PASSED  [ 16%]
+tests/test_asr.py::TestASREndpoint::test_transcriptions_health PASSED    [ 18%]
+tests/test_asr.py::TestASREndpoint::test_transcriptions_no_file PASSED   [ 20%]
+tests/test_asr.py::TestASREndpoint::test_transcriptions_with_mock_audio PASSED [ 22%]
+tests/test_nlu_rules.py::TestDeviceMatching::test_exact_name_match PASSED [ 25%]
+tests/test_nlu_rules.py::TestDeviceMatching::test_device_type_keyword_match PASSED [ 27%]
+tests/test_nlu_rules.py::TestDeviceMatching::test_room_and_type_match PASSED [ 29%]
+tests/test_nlu_rules.py::TestDeviceMatching::test_no_match_returns_none PASSED [ 31%]
+tests/test_nlu_rules.py::TestDeviceMatching::test_room_priority_over_type PASSED [ 33%]
+tests/test_nlu_rules.py::TestBatchDeviceMatching::test_find_all_lights PASSED [ 35%]
+tests/test_nlu_rules.py::TestBatchDeviceMatching::test_find_only_room_lights PASSED [ 37%]
+tests/test_nlu_rules.py::TestNumberExtraction::test_extract_temperature PASSED [ 39%]
+tests/test_nlu_rules.py::TestNumberExtraction::test_extract_percentage PASSED [ 41%]
+tests/test_nlu_rules.py::TestNumberExtraction::test_extract_decimal PASSED [ 43%]
+tests/test_nlu_rules.py::TestCommandRecognition::test_turn_on_keywords PASSED [ 45%]
+tests/test_nlu_rules.py::TestCommandRecognition::test_turn_off_keywords PASSED [ 47%]
+tests/test_nlu_rules.py::TestCommandRecognition::test_batch_target_keywords PASSED [ 50%]
+tests/test_nlu_rules.py::TestInterpretEndpoint::test_interpret_simple_turn_on PASSED [ 52%]
+tests/test_nlu_rules.py::TestInterpretEndpoint::test_interpret_temperature_adjust PASSED [ 54%]
+tests/test_nlu_rules.py::TestInterpretEndpoint::test_interpret_scene_trigger PASSED [ 56%]
+tests/test_nlu_rules.py::TestInterpretEndpoint::test_interpret_unclear_intent PASSED [ 58%]
+tests/test_nlu_rules.py::TestInterpretEndpoint::test_interpret_multi_action PASSED [ 60%]
+tests/test_nlu_rules.py::TestInterpretEndpoint::test_interpret_batch_lights PASSED [ 62%]
+tests/test_nlu_rules.py::TestInterpretEndpoint::test_interpret_unbound_device_rejected PASSED [ 64%]
+tests/test_nlu_rules.py::TestLLMEngine::test_build_devices_json PASSED   [ 66%]
+tests/test_nlu_rules.py::TestLLMEngine::test_build_devices_json_empty PASSED [ 68%]
+tests/test_nlu_rules.py::TestLLMEngine::test_system_prompt_contains_markers PASSED [ 70%]
+tests/test_nlu_rules.py::TestLLMEngine::test_deepseek_config_defaults PASSED [ 72%]
+tests/test_tts.py::TestTTSModels::test_synthesize_request_defaults PASSED [ 75%]
+tests/test_tts.py::TestTTSModels::test_synthesize_request_custom_voice PASSED [ 77%]
+tests/test_tts.py::TestTTSModels::test_synthesize_response_structure PASSED [ 79%]
+tests/test_tts.py::TestContentTypeMapping::test_mp3_mapping PASSED       [ 81%]
+tests/test_tts.py::TestContentTypeMapping::test_wav_mapping PASSED       [ 83%]
+tests/test_tts.py::TestContentTypeMapping::test_ogg_mapping PASSED       [ 85%]
+tests/test_tts.py::TestContentTypeMapping::test_unknown_format_fallback PASSED [ 87%]
+tests/test_tts.py::TestAudioCleanup::test_cleanup_empty_directory PASSED [ 89%]
+tests/test_tts.py::TestAudioCleanup::test_cleanup_expired_files PASSED   [ 91%]
+tests/test_tts.py::TestAudioCleanup::test_cleanup_skips_non_audio PASSED [ 93%]
+tests/test_tts.py::TestTTSHealthEndpoint::test_health_check PASSED       [ 95%]
+tests/test_tts.py::TestFallbackSynthesize::test_fallback_with_empty_text PASSED [ 97%]
+tests/test_tts.py::TestFallbackSynthesize::test_fallback_with_text PASSED [100%]
+
+=============================== warnings summary ===============================
+tests/test_asr.py::TestASREndpoint::test_transcriptions_health
+  /home/pokemon_song/Software-Project/smart-home-system/backend-core/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/ai_service_results.xml -
+============================= slowest 10 durations =============================
+0.24s call     tests/test_asr.py::TestASRConstants::test_max_file_size
+0.07s setup    tests/test_asr.py::TestASREndpoint::test_transcriptions_health
+0.01s setup    tests/test_nlu_rules.py::TestDeviceMatching::test_exact_name_match
+0.01s call     tests/test_nlu_rules.py::TestInterpretEndpoint::test_interpret_simple_turn_on
+
+(6 durations < 0.005s hidden.  Use -vv to show these durations.)
+======================== 48 passed, 1 warning in 0.45s =========================

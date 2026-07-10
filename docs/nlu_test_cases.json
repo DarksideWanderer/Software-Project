@@ -1,0 +1,163 @@
+[
+  {
+    "id": "NLU-001",
+    "text": "打开客厅灯",
+    "expected": {
+      "understood": true,
+      "actions": [
+        {
+          "kind": "device_command",
+          "device_id": "light-001",
+          "command": "turn_on",
+          "params": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "NLU-002",
+    "text": "把空调调到26度",
+    "expected": {
+      "understood": true,
+      "actions": [
+        {
+          "kind": "device_command",
+          "device_id": "ac-003",
+          "command": "set_temperature",
+          "params": {
+            "temperature": 26
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "NLU-003",
+    "text": "关闭电视",
+    "expected": {
+      "understood": true,
+      "actions": [
+        {
+          "kind": "device_command",
+          "device_id": "tv-001",
+          "command": "turn_off",
+          "params": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "NLU-004",
+    "text": "进入观影模式",
+    "expected": {
+      "understood": true,
+      "actions": [
+        {
+          "kind": "scene",
+          "scene_id": "movie"
+        }
+      ]
+    }
+  },
+  {
+    "id": "NLU-005",
+    "text": "打开客厅灯并关闭电视",
+    "expected": {
+      "understood": true,
+      "actions": [
+        {
+          "kind": "device_command",
+          "device_id": "light-001",
+          "command": "turn_on",
+          "params": {}
+        },
+        {
+          "kind": "device_command",
+          "device_id": "tv-001",
+          "command": "turn_off",
+          "params": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "NLU-006",
+    "text": "打开所有灯",
+    "expected": {
+      "understood": true,
+      "actions": [
+        {
+          "kind": "device_command",
+          "device_id": "light-001",
+          "command": "turn_on",
+          "params": {}
+        },
+        {
+          "kind": "device_command",
+          "device_id": "light-002",
+          "command": "turn_on",
+          "params": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "NLU-007",
+    "text": "把卧室灯调到50",
+    "expected": {
+      "understood": true,
+      "actions": [
+        {
+          "kind": "device_command",
+          "device_id": "light-002",
+          "command": "set_brightness",
+          "params": {
+            "brightness": 50
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "NLU-008",
+    "text": "帮我弄一下那个东西",
+    "expected": {
+      "understood": false,
+      "actions": []
+    }
+  },
+  {
+    "id": "NLU-009",
+    "text": "把冰箱温度调到零下18度",
+    "expected": {
+      "understood": true,
+      "actions": [
+        {
+          "kind": "device_command",
+          "device_id": "fridge-001",
+          "command": "set_temperature",
+          "params": {
+            "temperature": -18
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "NLU-010",
+    "text": "窗帘开到一半",
+    "expected": {
+      "understood": true,
+      "actions": [
+        {
+          "kind": "device_command",
+          "device_id": "curtain-001",
+          "command": "set_open_percent",
+          "params": {
+            "percent": 50
+          }
+        }
+      ]
+    }
+  }
+]
