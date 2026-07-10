@@ -11,11 +11,11 @@
 
 | ID | User Story | 优先级 | SP | Acceptance Criteria | 负责人 |
 | --- | --- | --- | --- | --- | --- |
-| US1-1 | 作为开发人员，我希望明确前端、主后端、AI 服务和设备模拟器的服务边界，以便各模块可以并行开发。 | P0 | 5 | 文档明确 Web 只访问 `backend-core`，AI key 只在 `ai-service` 服务端保存。 | BE-1, AI-1, FE-1 |
-| US1-2 | 作为后端开发人员，我希望确定稳定的 API 前缀，以便前端后续统一对接 `/api/v1`。 | P0 | 5 | `backend-core/app/api/v1` 聚合 devices、scenes、assistant、dashboard、audio 路由。 | BE-1 |
-| US1-3 | 作为 AI 开发人员，我希望建立内部 ASR/NLU/TTS 接口，以便主后端可以安全调用 AI 能力。 | P0 | 5 | `ai-service` 提供 `/internal/health`、ASR、NLU、TTS 内部接口。 | AI-1, AI-2 |
-| US1-4 | 作为设备模拟器开发人员，我希望模拟设备能够注册自身能力，以便后端可以根据能力转发命令。 | P0 | 8 | C++ simulator 连接 `DeviceHub :9760` 并发送 register JSON。 | BE-2 |
-| US1-5 | 作为前端开发人员，我希望先建立可运行的 Web 页面骨架，以便后续迭代承载设备、场景和助手功能。 | P1 | 3 | `web-console` 可静态访问，预留设备卡片、场景和助手区域。 | FE-1, FE-2 |
+| US1-1 | 作为开发人员，我希望明确前端、主后端、AI 服务和设备模拟器的服务边界，以便各模块可以并行开发。 | P0 | 5 | 文档明确 Web 只访问 `backend-core`，AI key 只在 `ai-service` 服务端保存。 | 陈浩贤, 何亮, 徐子轩 |
+| US1-2 | 作为后端开发人员，我希望确定稳定的 API 前缀，以便前端后续统一对接 `/api/v1`。 | P0 | 5 | `backend-core/app/api/v1` 聚合 devices、scenes、assistant、dashboard、audio 路由。 | 陈浩贤 |
+| US1-3 | 作为 AI 开发人员，我希望建立内部 ASR/NLU/TTS 接口，以便主后端可以安全调用 AI 能力。 | P0 | 5 | `ai-service` 提供 `/internal/health`、ASR、NLU、TTS 内部接口。 | 何亮, 林子程, 杨志宸 |
+| US1-4 | 作为设备模拟器开发人员，我希望模拟设备能够注册自身能力，以便后端可以根据能力转发命令。 | P0 | 8 | C++ simulator 连接 `DeviceHub :9760` 并发送 register JSON。 | 覃锐麟 |
+| US1-5 | 作为前端开发人员，我希望先建立可运行的 Web 页面骨架，以便后续迭代承载设备、场景和助手功能。 | P1 | 3 | `web-console` 可静态访问，预留设备卡片、场景和助手区域。 | 徐子轩, 徐梓博 |
 
 ## 3. Product Backlog Items
 
@@ -32,25 +32,25 @@
 
 | 任务 | 描述 | 负责人 | SP |
 | --- | --- | --- | --- |
-| T1-1 | 阅读 `Plan.md`、`ARCHITECTURE.md`、`FRONTEND_API_REQUIREMENTS.md`，整理系统边界、接口需求和模块职责。 | BE-1, AI-1, FE-1 | 2 |
-| T1-2 | 设计 `/api/v1` 路由结构，保留 devices、scenes、assistant、dashboard、audio。 | BE-1 | 3 |
-| T1-3 | 设计 AI 请求/响应模型，明确 NLU 只输出动作计划。 | AI-1, AI-2 | 5 |
-| T1-4 | 设计 DeviceHub TCP JSON 行协议和基础命令转发。 | BE-2 | 5 |
-| T1-5 | 定义设备能力字段：`id`、`type`、`commands`、`state_fields`、参数约束。 | BE-2, AI-3 | 3 |
-| T1-6 | 搭建 Web 静态入口和基础页面结构。 | FE-1, FE-2 | 3 |
-| T1-7 | 整理本地运行说明：8000、8001、9760 和 Web 静态访问。 | BE-1, AI-1, FE-1 | 2 |
+| T1-1 | 阅读 `Plan.md`、`ARCHITECTURE.md`、`FRONTEND_API_REQUIREMENTS.md`，整理系统边界、接口需求和模块职责。 | 陈浩贤, 何亮, 徐子轩 | 2 |
+| T1-2 | 设计 `/api/v1` 路由结构，保留 devices、scenes、assistant、dashboard、audio。 | 陈浩贤 | 3 |
+| T1-3 | 设计 AI 请求/响应模型，明确 NLU 只输出动作计划。 | 何亮, 林子程 | 5 |
+| T1-4 | 设计 DeviceHub TCP JSON 行协议和基础命令转发。 | 覃锐麟 | 5 |
+| T1-5 | 定义设备能力字段：`id`、`type`、`commands`、`state_fields`、参数约束。 | 覃锐麟, 林子程 | 3 |
+| T1-6 | 搭建 Web 静态入口和基础页面结构。 | 徐子轩, 徐梓博 | 3 |
+| T1-7 | 整理本地运行说明：8000、8001、9760 和 Web 静态访问。 | 陈浩贤, 何亮, 徐子轩 | 2 |
 
 ## 5. 七名成员分工
 
 | 成员 | 方向 | 本 Sprint 主要职责 |
 | --- | --- | --- |
-| AI-1 | AI | AI 服务接口边界、NLU 请求模型、内部健康检查。 |
-| AI-2 | AI | ASR/TTS 接口契约、环境变量和密钥隔离。 |
-| AI-3 | AI | 设备能力 Schema 与动作计划 Schema。 |
-| BE-1 | 后端 | FastAPI 应用入口、路由聚合、CORS 和健康检查。 |
-| BE-2 | 后端 | DeviceHub TCP 协议和 C++ simulator 通信约定。 |
-| FE-1 | 前端 | Web 控制台基础页面结构和 API 调用规划。 |
-| FE-2 | 前端 | 基础视觉布局、导航、占位卡片和联调提示。 |
+| 何亮 | AI | AI 服务接口边界、NLU 请求模型、内部健康检查。 |
+| 杨志宸 | AI | TTS 接口契约、语音合成降级、音频文件生命周期和密钥隔离。 |
+| 林子程 | AI | AI 服务接口、ASR/NLU/TTS 联调测试和接口文档整理。 |
+| 陈浩贤 | 后端 | FastAPI 应用入口、路由聚合、CORS 和健康检查。 |
+| 覃锐麟 | 后端 | DeviceHub TCP 协议和 C++ simulator 通信约定。 |
+| 徐子轩 | 前端 | Web 控制台基础页面结构和 API 调用规划。 |
+| 徐梓博 | 前端 | 基础视觉布局、导航、占位卡片和联调提示。 |
 
 ## 6. 任务优先级与工作量
 
@@ -98,7 +98,7 @@
 | 风险 | 影响 | 应对 |
 | --- | --- | --- |
 | 模块边界理解不一致 | 后续接口对接返工 | 在 Sprint 1 固化服务边界、端口和 API 前缀。 |
-| AI 与后端动作 Schema 不一致 | NLU 输出无法执行 | AI-3 与 BE-1 共同维护设备命令约束。 |
+| AI 与后端动作 Schema 不一致 | NLU 输出无法执行 | 林子程 与 陈浩贤 共同维护设备命令约束。 |
 | Windows 编译环境差异 | 模拟器无法运行 | 说明 C++ simulator 使用 CMake 和 MSYS2/Linux 类环境。 |
 
 ## 13. Sprint Retrospective

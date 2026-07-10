@@ -11,11 +11,11 @@ Sprint 1 已确认服务边界。本 Sprint 基于 `backend-core/app/services/ho
 
 | ID | User Story | 优先级 | SP | Acceptance Criteria | 负责人 |
 | --- | --- | --- | --- | --- | --- |
-| US2-1 | 作为用户，我希望在首页看到家电概览，以便快速了解当前设备状态。 | P0 | 5 | `/api/v1/dashboard` 返回 devices、scenes、summary；前端渲染设备卡片。 | BE-1, FE-1 |
-| US2-2 | 作为用户，我希望能够控制单个家电，以便执行开关、温度、亮度等基础操作。 | P0 | 8 | 前端详情抽屉调用 `POST /api/v1/devices/{id}/commands`，后端返回最新状态。 | BE-2, FE-2 |
-| US2-3 | 作为开发人员，我希望设备模拟器返回真实状态和命令结果，以便前端展示以后端结果为准。 | P0 | 5 | DeviceHub 可转发 `turn_on`、`turn_off`、`get_state` 和参数命令。 | BE-2 |
-| US2-4 | 作为用户，我希望可以输入文字指令控制家电，以便用自然语言完成常见操作。 | P1 | 5 | `/api/v1/assistant/messages` 调用 NLU 并执行 actions。 | AI-1, BE-1, FE-1 |
-| US2-5 | 作为用户，我希望语音输入与文字输入复用同一控制流程，以便获得一致的交互体验。 | P1 | 5 | `/api/v1/assistant/voice` 上传音频到 ASR 后复用 NLU 和执行链路。 | AI-2, FE-2 |
+| US2-1 | 作为用户，我希望在首页看到家电概览，以便快速了解当前设备状态。 | P0 | 5 | `/api/v1/dashboard` 返回 devices、scenes、summary；前端渲染设备卡片。 | 陈浩贤, 徐子轩 |
+| US2-2 | 作为用户，我希望能够控制单个家电，以便执行开关、温度、亮度等基础操作。 | P0 | 8 | 前端详情抽屉调用 `POST /api/v1/devices/{id}/commands`，后端返回最新状态。 | 覃锐麟, 徐梓博 |
+| US2-3 | 作为开发人员，我希望设备模拟器返回真实状态和命令结果，以便前端展示以后端结果为准。 | P0 | 5 | DeviceHub 可转发 `turn_on`、`turn_off`、`get_state` 和参数命令。 | 覃锐麟 |
+| US2-4 | 作为用户，我希望可以输入文字指令控制家电，以便用自然语言完成常见操作。 | P1 | 5 | `/api/v1/assistant/messages` 调用 NLU 并执行 actions。 | 何亮, 陈浩贤, 徐子轩 |
+| US2-5 | 作为用户，我希望语音输入与文字输入复用同一控制流程，以便获得一致的交互体验。 | P1 | 5 | `/api/v1/assistant/voice` 上传音频到 ASR 后复用 NLU、执行链路和 TTS 回复。 | 林子程, 杨志宸, 徐梓博 |
 
 ## 3. Product Backlog Items
 
@@ -31,25 +31,25 @@ Sprint 1 已确认服务边界。本 Sprint 基于 `backend-core/app/services/ho
 
 | 任务 | 描述 | 负责人 | SP |
 | --- | --- | --- | --- |
-| T2-1 | 在 `home_orchestrator` 中聚合设备状态、能力、显示名称、房间和摘要。 | BE-1 | 5 |
-| T2-2 | 在 `devices.py` 中提供产品化命令路径 `/devices/{id}/commands`。 | BE-2 | 3 |
-| T2-3 | 完成空调、灯、电视三类设备的前端控件映射。 | FE-2 | 5 |
-| T2-4 | 完成设备卡片、详情抽屉、开关、滑块和错误 toast。 | FE-1, FE-2 | 8 |
-| T2-5 | 实现 NLU 规则：设备名称、房间、类型关键词、数值参数。 | AI-1, AI-3 | 5 |
-| T2-6 | 实现 DeepSeek LLM fallback 的 prompt、JSON 提取和动作校验。 | AI-2 | 5 |
-| T2-7 | 对接 `/assistant/messages` 和 `/assistant/voice`。 | BE-1, AI-1 | 5 |
+| T2-1 | 在 `home_orchestrator` 中聚合设备状态、能力、显示名称、房间和摘要。 | 陈浩贤 | 5 |
+| T2-2 | 在 `devices.py` 中提供产品化命令路径 `/devices/{id}/commands`。 | 覃锐麟 | 3 |
+| T2-3 | 完成空调、灯、电视三类设备的前端控件映射。 | 徐梓博 | 5 |
+| T2-4 | 完成设备卡片、详情抽屉、开关、滑块和错误 toast。 | 徐子轩, 徐梓博 | 8 |
+| T2-5 | 实现 NLU 规则：设备名称、房间、类型关键词、数值参数。 | 何亮, 林子程 | 5 |
+| T2-6 | 实现 DeepSeek LLM fallback 的 prompt、JSON 提取和动作校验。 | 何亮, 林子程 | 5 |
+| T2-7 | 对接 `/assistant/messages` 和 `/assistant/voice`。 | 陈浩贤, 何亮, 林子程, 杨志宸 | 5 |
 
 ## 5. 七名成员分工
 
 | 成员 | 方向 | 本 Sprint 主要职责 |
 | --- | --- | --- |
-| AI-1 | AI | NLU 规则引擎和基础用例。 |
-| AI-2 | AI | DeepSeek fallback、输出校验和失败降级。 |
-| AI-3 | AI | 设备动作映射测试数据，参与 ASR/TTS 联调。 |
-| BE-1 | 后端 | 聚合层、assistant 文本链路和 dashboard。 |
-| BE-2 | 后端 | DeviceHub 命令转发、状态读取和模拟器联调。 |
-| FE-1 | 前端 | 主页布局、设备卡片、摘要区和助手面板。 |
-| FE-2 | 前端 | 详情抽屉、控制控件、录音上传和错误提示。 |
+| 何亮 | AI | NLU 规则引擎和基础用例。 |
+| 杨志宸 | AI | TTS 语音合成、云端/本地降级和音频文件管理。 |
+| 林子程 | AI | AI 服务接口联调、ASR/NLU/TTS 测试验证和文档整理。 |
+| 陈浩贤 | 后端 | 聚合层、assistant 文本链路和 dashboard。 |
+| 覃锐麟 | 后端 | DeviceHub 命令转发、状态读取和模拟器联调。 |
+| 徐子轩 | 前端 | Web 控制台主流程、设备总览、设备卡片、助手面板和 API 需求整理。 |
+| 徐梓博 | 前端 | 详情抽屉、控制控件、页面适配、加载/离线/错误提示和语音反馈。 |
 
 ## 6. 任务优先级与工作量
 
