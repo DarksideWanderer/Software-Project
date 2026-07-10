@@ -203,20 +203,7 @@
             </div>
             <button class="more-button" type="button" id="moreScenesButton">管理场景</button>
           </div>
-          <div class="scene-list">
-            <button class="scene-chip" type="button" data-scene="home">
-              <span class="scene-icon home-scene"><svg><use href="#icon-home"></use></svg></span>
-              <span><strong>回家</strong><small>灯光与空调</small></span>
-            </button>
-            <button class="scene-chip" type="button" data-scene="movie">
-              <span class="scene-icon movie-scene"><svg><use href="#icon-tv"></use></svg></span>
-              <span><strong>观影</strong><small>氛围灯与电视</small></span>
-            </button>
-            <button class="scene-chip" type="button" data-scene="away">
-              <span class="scene-icon away-scene"><svg><use href="#icon-shield"></use></svg></span>
-              <span><strong>离家</strong><small>关闭非必要设备</small></span>
-            </button>
-          </div>
+          <div class="scene-list" id="sceneList"></div>
         </section>
 
         <section class="devices-section" aria-labelledby="devicesTitle">
@@ -225,9 +212,12 @@
               <span class="section-kicker">全部设备</span>
               <h2 id="devicesTitle">家的每一处，都在掌握</h2>
             </div>
-            <div class="device-summary">
-              <span><i class="summary-dot online"></i><strong id="onlineCount">0</strong> 在线</span>
-              <span><i class="summary-dot active"></i><strong id="activeCount">0</strong> 运行中</span>
+            <div class="device-heading-actions">
+              <div class="device-summary">
+                <span><i class="summary-dot online"></i><strong id="onlineCount">0</strong> 在线</span>
+                <span><i class="summary-dot active"></i><strong id="activeCount">0</strong> 运行中</span>
+              </div>
+              <button class="more-button" type="button" id="addDeviceButton">添加家电</button>
             </div>
           </div>
           <div class="device-grid" id="deviceGrid"></div>
@@ -300,6 +290,53 @@
     <aside class="device-drawer" id="deviceDrawer" aria-label="设备详情" aria-hidden="true">
       <div id="drawerContent"></div>
     </aside>
+
+    <section class="modal-panel" id="deviceModal" aria-hidden="true" aria-label="添加家电">
+      <div class="modal-card">
+        <header class="modal-header">
+          <div>
+            <span class="section-kicker">设备发现</span>
+            <h2>添加家电</h2>
+          </div>
+          <button class="icon-button modal-close" type="button" data-close-modal="deviceModal" aria-label="关闭添加家电">
+            <svg><use href="#icon-close"></use></svg>
+          </button>
+        </header>
+        <div class="modal-actions">
+          <button class="more-button" type="button" id="discoverButton">检索设备</button>
+        </div>
+        <div class="candidate-grid" id="candidateGrid"></div>
+      </div>
+    </section>
+
+    <section class="modal-panel" id="sceneModal" aria-hidden="true" aria-label="创建场景">
+      <div class="modal-card">
+        <header class="modal-header">
+          <div>
+            <span class="section-kicker">场景</span>
+            <h2>创建场景</h2>
+          </div>
+          <button class="icon-button modal-close" type="button" data-close-modal="sceneModal" aria-label="关闭创建场景">
+            <svg><use href="#icon-close"></use></svg>
+          </button>
+        </header>
+        <form class="scene-composer" id="sceneComposer">
+          <input id="sceneNameInput" type="text" placeholder="场景名称" />
+          <textarea id="sceneTextInput" rows="4" placeholder="自然语言场景，例如：回家模式：打开客厅灯，空调调到 26 度。"></textarea>
+          <div class="rule-builder">
+            <div class="control-title"><strong>规则动作</strong><span>可选，手动添加精确控制</span></div>
+            <div class="rule-row">
+              <select id="ruleDeviceSelect"></select>
+              <select id="ruleCommandSelect"></select>
+              <input id="ruleParamInput" type="text" placeholder="参数值，可留空" />
+              <button class="more-button" type="button" id="addRuleButton">添加动作</button>
+            </div>
+            <div class="rule-list" id="ruleList"></div>
+          </div>
+          <button class="more-button" type="submit">创建场景</button>
+        </form>
+      </div>
+    </section>
 
     <div class="toast-region" id="toastRegion" aria-live="polite"></div>
 
