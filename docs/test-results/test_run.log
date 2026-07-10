@@ -1,0 +1,125 @@
+2026-07-10 15:52:01,593 [INFO] Test Data Generator for Smart Home Hub v2.0.0
+2026-07-10 15:52:01,593 [INFO] Output directory: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data
+2026-07-10 15:52:01,593 [INFO] ============================================================
+2026-07-10 15:52:01,593 [INFO] Generating Test Data
+2026-07-10 15:52:01,593 [INFO] ============================================================
+2026-07-10 15:52:01,594 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/home_state.json (4920 bytes)
+2026-07-10 15:52:01,594 [INFO]   - 12 bound devices
+2026-07-10 15:52:01,594 [INFO]   - 12 device states
+2026-07-10 15:52:01,594 [INFO]   - 2 user scenes
+2026-07-10 15:52:01,594 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/nlu_test_cases.json (3170 bytes)
+2026-07-10 15:52:01,594 [INFO]   - 10 NLU test cases
+2026-07-10 15:52:01,595 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/device_command_test_data.json (1539 bytes)
+2026-07-10 15:52:01,595 [INFO]   - 11 command test cases
+2026-07-10 15:52:01,595 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/edge_cases.json (1167 bytes)
+2026-07-10 15:52:01,595 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/test_report_meta.json (453 bytes)
+2026-07-10 15:52:01,595 [INFO] All test data generated in: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data
+2026-07-10 15:52:01,595 [INFO] ============================================================
+2026-07-10 15:52:01,595 [INFO] Running All Tests
+2026-07-10 15:52:01,596 [INFO] ============================================================
+2026-07-10 15:52:01,596 [INFO] Running tests in: backend-core
+2026-07-10 15:52:01,614 [INFO] Running tests in: ai-service
+2026-07-10 15:52:01,630 [INFO] Running tests in: .
+2026-07-10 15:52:01,646 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/test_results_summary.json (697 bytes)
+2026-07-10 15:52:01,646 [INFO] --- Test Summary ---
+2026-07-10 15:52:01,646 [INFO]   Total:  3
+2026-07-10 15:52:01,646 [INFO]   Passed: 0
+2026-07-10 15:52:01,646 [INFO]   Failed: 3
+2026-07-10 15:52:01,646 [INFO]   Skipped: 0
+2026-07-10 15:52:01,646 [INFO] Log report written: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/test_run_report.txt
+2026-07-10 15:52:01,646 [INFO] Done.
+2026-07-10 15:52:40,559 [INFO] Test Data Generator for Smart Home Hub v2.0.0
+2026-07-10 15:52:40,559 [INFO] Output directory: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data
+2026-07-10 15:52:40,559 [INFO] ============================================================
+2026-07-10 15:52:40,559 [INFO] Running All Tests
+2026-07-10 15:52:40,559 [INFO] ============================================================
+2026-07-10 15:52:40,560 [INFO] Running tests in: backend-core
+2026-07-10 15:53:10,425 [INFO] Running tests in: ai-service
+2026-07-10 15:53:11,228 [INFO] Running tests in: .
+2026-07-10 15:53:25,685 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/test_results_summary.json (15347 bytes)
+2026-07-10 15:53:25,685 [INFO] --- Test Summary ---
+2026-07-10 15:53:25,685 [INFO]   Total:  3
+2026-07-10 15:53:25,685 [INFO]   Passed: 0
+2026-07-10 15:53:25,685 [INFO]   Failed: 3
+2026-07-10 15:53:25,686 [INFO]   Skipped: 0
+2026-07-10 15:53:25,686 [INFO] Log report written: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/test_run_report.txt
+2026-07-10 15:53:25,686 [INFO] Done.
+2026-07-10 15:55:03,834 [INFO] Test Data Generator for Smart Home Hub v2.0.0
+2026-07-10 15:55:03,834 [INFO] Output directory: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data
+2026-07-10 15:55:03,834 [INFO] ============================================================
+2026-07-10 15:55:03,834 [INFO] Running All Tests
+2026-07-10 15:55:03,834 [INFO] ============================================================
+2026-07-10 15:55:03,835 [INFO] Running tests in: backend-core
+2026-07-10 15:55:33,663 [INFO] Running tests in: ai-service
+2026-07-10 15:55:34,406 [INFO] Running tests in: .
+2026-07-10 15:55:50,301 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/test_results_summary.json (15362 bytes)
+2026-07-10 15:55:50,302 [INFO] --- Test Summary ---
+2026-07-10 15:55:50,302 [INFO]   Total:  3
+2026-07-10 15:55:50,302 [INFO]   Passed: 0
+2026-07-10 15:55:50,302 [INFO]   Failed: 3
+2026-07-10 15:55:50,302 [INFO]   Skipped: 0
+2026-07-10 15:55:50,302 [INFO] Log report written: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/test_run_report.txt
+2026-07-10 15:55:50,302 [INFO] Done.
+2026-07-10 16:01:38,941 [INFO] Test Data Generator for Smart Home Hub v2.0.0
+2026-07-10 16:01:38,941 [INFO] Output directory: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data
+2026-07-10 16:01:38,941 [INFO] ============================================================
+2026-07-10 16:01:38,942 [INFO] Running All Tests
+2026-07-10 16:01:38,942 [INFO] ============================================================
+2026-07-10 16:01:38,942 [INFO] Running tests in: backend-core
+2026-07-10 16:02:09,939 [INFO] Running tests in: ai-service
+2026-07-10 16:02:10,621 [INFO] Running tests in: .
+2026-07-10 16:02:24,510 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/test_results_summary.json (12887 bytes)
+2026-07-10 16:02:24,511 [INFO] --- Test Summary ---
+2026-07-10 16:02:24,511 [INFO]   Total:  3
+2026-07-10 16:02:24,511 [INFO]   Passed: 2
+2026-07-10 16:02:24,511 [INFO]   Failed: 1
+2026-07-10 16:02:24,511 [INFO]   Skipped: 0
+2026-07-10 16:02:24,512 [INFO] Log report written: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/test_run_report.txt
+2026-07-10 16:02:24,512 [INFO] Done.
+2026-07-10 16:02:50,404 [INFO] Test Data Generator for Smart Home Hub v2.0.0
+2026-07-10 16:02:50,404 [INFO] Output directory: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data
+2026-07-10 16:02:50,404 [INFO] ============================================================
+2026-07-10 16:02:50,404 [INFO] Generating Test Data
+2026-07-10 16:02:50,404 [INFO] ============================================================
+2026-07-10 16:02:50,405 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/home_state.json (4920 bytes)
+2026-07-10 16:02:50,405 [INFO]   - 12 bound devices
+2026-07-10 16:02:50,405 [INFO]   - 12 device states
+2026-07-10 16:02:50,405 [INFO]   - 2 user scenes
+2026-07-10 16:02:50,405 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/nlu_test_cases.json (3170 bytes)
+2026-07-10 16:02:50,405 [INFO]   - 10 NLU test cases
+2026-07-10 16:02:50,406 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/device_command_test_data.json (1539 bytes)
+2026-07-10 16:02:50,406 [INFO]   - 11 command test cases
+2026-07-10 16:02:50,406 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/edge_cases.json (1167 bytes)
+2026-07-10 16:02:50,407 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/test_report_meta.json (453 bytes)
+2026-07-10 16:02:50,407 [INFO] All test data generated in: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data
+2026-07-10 16:02:50,407 [INFO] ============================================================
+2026-07-10 16:02:50,407 [INFO] Running All Tests
+2026-07-10 16:02:50,407 [INFO] ============================================================
+2026-07-10 16:02:50,407 [INFO] Running tests in: backend-core
+2026-07-10 16:03:19,964 [INFO] Running tests in: ai-service
+2026-07-10 16:03:20,638 [INFO] Running tests in: .
+2026-07-10 16:03:36,383 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/test_results_summary.json (12883 bytes)
+2026-07-10 16:03:36,383 [INFO] --- Test Summary ---
+2026-07-10 16:03:36,384 [INFO]   Total:  3
+2026-07-10 16:03:36,384 [INFO]   Passed: 3
+2026-07-10 16:03:36,384 [INFO]   Failed: 0
+2026-07-10 16:03:36,384 [INFO]   Skipped: 0
+2026-07-10 16:03:36,384 [INFO] Log report written: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/test_run_report.txt
+2026-07-10 16:03:36,384 [INFO] Done.
+2026-07-10 17:02:33,853 [INFO] Test Data Generator for Smart Home Hub v2.0.0
+2026-07-10 17:02:33,854 [INFO] Output directory: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data
+2026-07-10 17:02:33,854 [INFO] ============================================================
+2026-07-10 17:02:33,854 [INFO] Generating Test Data
+2026-07-10 17:02:33,854 [INFO] ============================================================
+2026-07-10 17:02:33,855 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/home_state.json (4920 bytes)
+2026-07-10 17:02:33,855 [INFO]   - 12 bound devices
+2026-07-10 17:02:33,855 [INFO]   - 12 device states
+2026-07-10 17:02:33,855 [INFO]   - 2 user scenes
+2026-07-10 17:02:33,855 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/nlu_test_cases.json (3170 bytes)
+2026-07-10 17:02:33,855 [INFO]   - 10 NLU test cases
+2026-07-10 17:02:33,855 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/device_command_test_data.json (1539 bytes)
+2026-07-10 17:02:33,856 [INFO]   - 11 command test cases
+2026-07-10 17:02:33,856 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/edge_cases.json (1167 bytes)
+2026-07-10 17:02:33,856 [INFO] Wrote: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data/test_report_meta.json (453 bytes)
+2026-07-10 17:02:33,856 [INFO] All test data generated in: /home/pokemon_song/Software-Project/smart-home-system/tests/test_data
+2026-07-10 17:02:33,856 [INFO] Done.

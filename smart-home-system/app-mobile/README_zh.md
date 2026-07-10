@@ -1,17 +1,26 @@
-# 智能家居移动端应用
+# 智能家居移动端
 
-## 简介
-用于用户交互、实时设备控制和状态监控的多平台移动端应用程序。
+本目录是后续移动端客户端的预留目录。当前项目可运行客户端是 `../web-console`，已实现的业务流程都通过 `backend-core` 的 `/api/v1` 暴露。
 
-## 技术栈
-- **框架**: Flutter
-- **语言**: Dart
-- **状态管理**: Riverpod / Bloc
-- **消息队列**: MQTT Client
+## 当前状态
 
-## 目录结构
-- `lib/models/`: 数据模型
-- `lib/providers/`: 状态管理
-- `lib/screens/`: 界面视图
-- `lib/widgets/`: 可复用组件
-- `test/`: Flutter 组件与单元测试
+- 本目录目前没有移动端应用源码。
+- 当前项目演示不需要移动端依赖。
+- 后续移动端应复用 `web-console` 已使用的后端 API。
+
+## 接口边界
+
+后续移动端只应调用：
+
+```text
+backend-core /api/v1
+```
+
+移动端不应直接调用 `ai-service` 或 DeviceHub。
+
+## 相关模块
+
+- `../web-console`：当前浏览器客户端
+- `../backend-core`：API 网关和业务编排
+- `../ai-service`：内部 ASR/NLU/TTS 服务
+- `../device-simulator`：本地设备进程

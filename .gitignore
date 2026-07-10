@@ -22,6 +22,7 @@ Thumbs.db
 build/
 dist/
 *.egg-info/
+smart-home-system/backend-core/data/home_state.json
 
 # Executables
 *.exe

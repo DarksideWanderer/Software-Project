@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-07-10T09:02:33.856421+00:00",
+  "project": "Smart Home Hub v2.0.0",
+  "test_data_files": [
+    "home_state.json",
+    "nlu_test_cases.json",
+    "device_command_test_data.json",
+    "edge_cases.json"
+  ],
+  "modules": {
+    "backend-core": "tests/test_*.py (3 files)",
+    "ai-service": "tests/test_*.py (3 files)",
+    "device-simulator": "tests/test_core.cpp (GTest)",
+    "web-console": "tests/test_app.test.js (Jest)"
+  }
+}

@@ -96,6 +96,19 @@ ROOM_KEYWORDS: tuple[str, ...] = ("客厅", "卧室", "书房", "厨房", "阳�
 
 TURN_ON_WORDS: tuple[str, ...] = ("打开", "开启", "启动", "开灯", "开")
 TURN_OFF_WORDS: tuple[str, ...] = ("关闭", "关掉", "关上", "停止", "关")
+BATCH_TARGET_WORDS: tuple[str, ...] = (
+    "所有",
+    "全部",
+    "全都",
+    "全屋",
+    "全家",
+    "两个",
+    "两台",
+    "多台",
+    "同时",
+    "一起",
+    "同步",
+)
 
 SCENE_TRIGGER_WORDS: tuple[str, ...] = ("开启", "设置", "进入", "切换到", "执行")
 
@@ -205,6 +218,23 @@ def _find_devices_by_type(
                 matched.append(dev)
                 break
     return matched
+
+
+def _wants_batch_target(text: str) -> bool:
+    return any(word in text for word in BATCH_TARGET_WORDS)
+
+
+def _append_device_action(
+    actions: list[dict], device: DeviceInfo, command: str, params: dict[str, Any]
+) -> None:
+    item = {
+        "kind": "device_command",
+        "device_id": device.id,
+        "command": command,
+        "params": params,
+    }
+    if item not in actions:
+        actions.append(item)
 
 
 def _extract_number(text: str) -> int | None:
@@ -322,45 +352,75 @@ def _interpret(text: str, devices: list[DeviceInfo], scenes: list[SceneInfo]) ->
         }
 
     # ── 分割复合指令 ──────────────────────────────────────────────────
-    # 按 "并" "和" "，" 分割
-    parts = re.split(r"[，,并和]+", text)
+    # 按中文常见连接词拆分，后续会继承上一段明确提到的设备/命令。
+    parts = re.split(r"(?:，|,|；|;|然后|接着|再|并且|并|以及|同时|和)", text)
     parts = [p.strip() for p in parts if p.strip()]
     if len(parts) <= 1:
         parts = [text]
 
+    last_device: DeviceInfo | None = None
+    last_command: str | None = None
+
     for part in parts:
         number = _extract_number(part)
+
+        # Batch type targets must run before _find_device(), otherwise a generic
+        # type word like "空调" is consumed by the first matching device.
+        batch_handled = False
+        if _wants_batch_target(part):
+            for dtype in DEVICE_TYPE_KEYWORDS:
+                matched = _find_devices_by_type(part, devices, dtype)
+                if len(matched) <= 1:
+                    continue
+                for dev in matched:
+                    cmd, params = _resolve_command(part, dev, number)
+                    if cmd is None and last_command in ("turn_on", "turn_off") and number is None:
+                        cmd, params = last_command, {}
+                    if cmd:
+                        _append_device_action(actions, dev, cmd, params)
+                        last_device = dev
+                        last_command = cmd
+                batch_handled = True
+                break
+        if batch_handled:
+            continue
 
         # 查找匹配的设备
         device = _find_device(part, devices)
         if device is None:
             # 尝试只匹配类型
+            matched_any = False
             for dtype in DEVICE_TYPE_KEYWORDS:
                 matched = _find_devices_by_type(part, devices, dtype)
                 if matched:
+                    matched_any = True
                     for dev in matched:
                         cmd, params = _resolve_command(part, dev, number)
+                        if cmd is None and last_command in ("turn_on", "turn_off") and number is None:
+                            cmd, params = last_command, {}
                         if cmd:
-                            actions.append({
-                                "kind": "device_command",
-                                "device_id": dev.id,
-                                "command": cmd,
-                                "params": params,
-                            })
+                            _append_device_action(actions, dev, cmd, params)
+                            last_device = dev
+                            last_command = cmd
                     break
+            if matched_any:
+                continue
+
+        if device is None and last_device is not None:
+            device = last_device
+        if device is None:
             continue
 
         cmd, params = _resolve_command(part, device, number)
+        if cmd is None and last_command in ("turn_on", "turn_off") and number is None:
+            cmd, params = last_command, {}
         if cmd is None:
             # 设备找到但无法解析命令 → 不生成动作
             continue
 
-        actions.append({
-            "kind": "device_command",
-            "device_id": device.id,
-            "command": cmd,
-            "params": params,
-        })
+        _append_device_action(actions, device, cmd, params)
+        last_device = device
+        last_command = cmd
 
     if not actions:
         return {

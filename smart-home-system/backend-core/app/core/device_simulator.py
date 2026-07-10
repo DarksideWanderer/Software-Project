@@ -27,6 +27,8 @@ class DeviceConnection:
             self.writer.write((data + "\n").encode())
             await self.writer.drain()
             line = await self.reader.readline()
+            if not line:
+                raise ConnectionError("Device connection closed")
             return line.decode().strip()
 
     async def read_registration(self) -> str:
@@ -78,7 +80,13 @@ class DeviceHub:
             "command": command,
             **{key: str(value) for key, value in (params or {}).items()},
         })
-        resp = await conn.send_recv(payload)
+        try:
+            resp = await conn.send_recv(payload)
+        except (ConnectionError, OSError, asyncio.IncompleteReadError) as exc:
+            conn.close()
+            self._devices.pop(device_id, None)
+            self._registry.pop(device_id, None)
+            return {"success": False, "message": f"Device {device_id} disconnected: {exc}"}
         try:
             return json.loads(resp)
         except json.JSONDecodeError:

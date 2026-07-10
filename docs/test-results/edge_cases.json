@@ -1,0 +1,63 @@
+{
+  "binding_conflicts": [
+    {
+      "device_id": "ac-003",
+      "attempt": "rebind",
+      "expected_status": 409
+    },
+    {
+      "device_id": "ac-003",
+      "attempt": "bind with type mismatch",
+      "expected_status": 409,
+      "note": "type conflict"
+    }
+  ],
+  "invalid_device_ids": [
+    "nonexistent-999",
+    "",
+    "invalid!@#",
+    "acxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  ],
+  "invalid_params": [
+    {
+      "command": "set_temperature",
+      "params": {}
+    },
+    {
+      "command": "set_temperature",
+      "params": {
+        "not_a_param": 1
+      }
+    },
+    {
+      "command": "unknown_command",
+      "params": {}
+    }
+  ],
+  "boundary_values": {
+    "ac_temperature": {
+      "min": 16,
+      "max": 30,
+      "below": -999,
+      "above": 999
+    },
+    "light_brightness": {
+      "min": 0,
+      "max": 100,
+      "below": -999,
+      "above": 999
+    },
+    "tv_volume": {
+      "min": 0,
+      "max": 100,
+      "below": -999,
+      "above": 999
+    },
+    "tv_channel": {
+      "min": 1,
+      "max": 999,
+      "below": -999,
+      "above": 9999
+    }
+  }
+}
